@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juanitas · Creativos Remarketing Jun 2026</title>
+  <link rel="stylesheet" href="file:///Users/mica/Downloads/Juanitas Design System/colors_and_type.css">
+  <style>
+    /* ---- Gallery shell ---- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--beige); font-family: var(--font); color: var(--tinta); }
+
+    .page { max-width: 1340px; margin: 0 auto; padding: 56px 40px 120px; }
+
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 48px; }
+    .page-header img { height: 44px; }
+    .header-meta { text-align: right; }
+    .header-meta .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--fg3); }
+    .header-meta h1 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; margin: 4px 0 2px; }
+    .header-meta p { font-size: 13px; color: var(--fg2); }
+
+    .campaign-group { margin-bottom: 72px; }
+    .campaign-label {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 999px; padding: 8px 20px;
+      font-size: 13px; font-weight: 700; margin-bottom: 28px;
+      box-shadow: var(--sh-sm);
+    }
+    .campaign-label .dot { width: 10px; height: 10px; border-radius: 50%; }
+    .campaign-label.a .dot { background: var(--fucsia); }
+    .campaign-label.b .dot { background: var(--azul); }
+
+    .grid { display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start; }
+
+    .ad-item { display: flex; flex-direction: column; gap: 10px; }
+    .ad-meta { display: flex; flex-direction: column; gap: 3px; }
+    .ad-meta .name { font-family: "SF Mono","Fira Code",monospace; font-size: 11px; font-weight: 600; color: var(--fg3); letter-spacing: .04em; }
+    .ad-meta .desc { font-size: 13px; font-weight: 600; color: var(--tinta); }
+    .ad-meta .format { font-size: 11px; color: var(--fg3); }
+
+    /* Scale wrapper — each placa is 1080×1080, displayed at 380px */
+    .frame {
+      border-radius: 20px; overflow: hidden;
+      box-shadow: var(--sh-lg);
+      width: 380px; height: 380px; flex-shrink: 0;
+      position: relative; background: var(--crema);
+    }
+    .frame .inner {
+      width: 1080px; height: 1080px;
+      transform: scale(calc(380/1080));
+      transform-origin: top left;
+      position: absolute; top: 0; left: 0;
+    }
+    /* Story frame: 1080×1920 shown at 214×380 */
+    .frame.story {
+      width: 214px; height: 380px;
+    }
+    .frame.story .inner {
+      width: 1080px; height: 1920px;
+      transform: scale(calc(214/1080));
+    }
+
+    /* ============================================================
+       PLACA BASE STYLES (dentro del inner 1080×1080)
+    ============================================================ */
+    .placa {
+      width: 1080px; height: 1080px;
+      position: relative; overflow: hidden;
+      font-family: var(--font); box-sizing: border-box;
+    }
+    .placa-story {
+      width: 1080px; height: 1920px;
+      position: relative; overflow: hidden;
+      font-family: var(--font); box-sizing: border-box;
+    }
+    .logo { height: 60px; width: auto; object-fit: contain; display: block; }
+    .logo-sm { height: 44px; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--coral); color: #fff;
+      font-weight: 700; font-size: 30px;
+      padding: 18px 40px; border-radius: 999px;
+    }
+    .pill-light {
+      background: #fff; color: var(--tinta);
+      box-shadow: var(--sh-sm);
+    }
+    .pill-tinta { background: var(--tinta); color: #fff; }
+    .pill-azul  { background: var(--azul);  color: #fff; }
+    .pill-verde { background: var(--verde);  color: var(--tinta); font-size: 24px; padding: 12px 28px; }
+    .pill-sm    { font-size: 24px; padding: 14px 32px; }
+
+    .mark-f { display: inline-block; background: var(--fucsia); color: #fff;
+      padding: .04em .28em; border-radius: 8px; line-height: 1.16; }
+    .mark-c { display: inline-block; background: var(--coral); color: #fff;
+      padding: .04em .28em; border-radius: 8px; line-height: 1.16; }
+    .mark-a { display: inline-block; background: var(--azul); color: #fff;
+      padding: .04em .28em; border-radius: 8px; line-height: 1.16; }
+    .mark-v { display: inline-block; background: var(--verde); color: var(--tinta);
+      padding: .04em .28em; border-radius: 8px; line-height: 1.16; }
+    .mark-n { display: inline-block; background: var(--naranja); color: #fff;
+      padding: .04em .28em; border-radius: 8px; line-height: 1.16; }
+    .mark-t { display: inline-block; background: var(--tinta); color: #fff;
+      padding: .04em .28em; border-radius: 8px; line-height: 1.16; }
+    .mark-am{ display: inline-block; background: var(--amarillo); color: var(--tinta);
+      padding: .04em .28em; border-radius: 8px; line-height: 1.16; }
+
+    .hand { font-family: var(--font-hand); font-weight: 600; line-height: .92;
+      color: var(--fucsia); display: inline-block; }
+
+    .sparkle { position: absolute; pointer-events: none; line-height: 1; }
+
+    /* safe-zone padding */
+    .safe { padding: 70px; }
+
+    /* ---- Print / export hint ---- */
+    .export-hint {
+      margin-top: 60px; background: var(--surface); border-radius: 14px;
+      padding: 24px 28px; border: 1px solid var(--border);
+      font-size: 13px; color: var(--fg2); line-height: 1.6;
+      box-shadow: var(--sh-sm);
+    }
+    .export-hint strong { color: var(--tinta); }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <img src="file:///Users/mica/Downloads/Juanitas Design System/assets/juanitas-logo.png" alt="juanitas">
+    <div class="header-meta">
+      <div class="eyebrow">Creativos · Remarketing</div>
+      <h1>7 placas · Jun 2026</h1>
+      <p>Campañas A (Funnel caliente) y B (Recompra) · 1080×1080</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       CAMPAÑA A — FUNNEL CALIENTE (4 ads)
+  ============================================================ -->
+  <div class="campaign-group">
+    <div class="campaign-label a">
+      <div class="dot"></div>
+      Campaña A · JUANITAS_META_REMARKETING_FUNNEL-CALIENTE_JUN2026
+    </div>
+    <div class="grid">
+
+      <!-- AD A1: CUPON URGENCIA -->
+      <div class="ad-item">
+        <div class="frame">
+          <div class="inner">
+            <div class="placa safe" style="background: var(--rosa-soft);">
+
+              <!-- Doodles -->
+              <span class="sparkle" style="left:900px;top:80px;font-size:52px;color:var(--fucsia);opacity:.35;">✦</span>
+              <span class="sparkle" style="left:60px;top:600px;font-size:36px;color:var(--amarillo);">✦</span>
+              <span class="sparkle" style="left:980px;top:700px;font-size:28px;color:var(--rosa);">✿</span>
+
+              <!-- Logo -->
+              <img class="logo" src="file:///Users/mica/Downloads/Juanitas Design System/assets/juanitas-logo.png" alt="juanitas">
+
+              <!-- Hook -->
+              <div style="margin-top:52px; max-width:560px;">
+                <p style="font-weight:700;font-size:38px;color:var(--fg2);margin:0 0 8px;line-height:1.2;">
+                  Lo dejaste en el carrito.
+                </p>
+                <h1 style="font-weight:800;font-size:80px;line-height:.95;letter-spacing:-.025em;color:var(--tinta);margin:0 0 32px;">
+                  Tu cajón<br>te lo estaba<br>
+                  <span class="hand" style="font-size:92px;color:var(--coral);">pidiendo.</span>
+                </h1>
+
+                <!-- Cupón -->
+                <div style="display:inline-flex;flex-direction:column;gap:6px;background:#fff;
+                  border-radius:20px;padding:22px 30px;box-shadow:var(--sh-md);margin-bottom:30px;">
+                  <span style="font-size:20px;font-weight:600;color:var(--fg2);letter-spacing:.1em;text-transform:uppercase;">Tu cupón</span>
+                  <span style="font-size:68px;font-weight:900;letter-spacing:.06em;color:var(--coral);line-height:1;">LOQUIERO5</span>
+                  <span style="font-size:20px;font-weight:500;color:var(--fg2);">5% OFF en toda la tienda</span>
+                </div>
+
+                <!-- Envío -->
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:38px;">
+                  <span class="pill-verde pill" style="font-size:22px;padding:10px 24px;">✓ Envío gratis desde $50.000</span>
+                </div>
+
+                <!-- CTA -->
+                <span class="pill">Usá tu cupón →</span>
+              </div>
+
+              <!-- Foto real derecha -->
+              <img src="file:///Users/mica/Downloads/H63A9261.jpg"
+                alt="Juanitas"
+                style="position:absolute;right:0;top:0;width:440px;height:1080px;
+                  object-fit:cover;object-position:center top;">
+              <!-- gradiente de fusión -->
+              <div style="position:absolute;right:300px;top:0;width:200px;height:1080px;
+                background:linear-gradient(to right, var(--rosa-soft), transparent);pointer-events:none;"></div>
+
+            </div>
+          </div>
+        </div>
+        <div class="ad-meta">
+          <span class="name">PLACA_CUPON-URGENCIA_GENERAL_V1</span>
+          <span class="desc">Cupón LOQUIERO5 · urgencia carrito</span>
+          <span class="format">1080×1080 · Feed / Ad</span>
+        </div>
+      </div>
+
+      <!-- AD A2: OBJECION TALLES -->
+      <div class="ad-item">
+        <div class="frame">
+          <div class="inner">
+            <div class="placa safe" style="background: var(--crema);">
+
+              <span class="sparkle" style="left:920px;top:60px;font-size:44px;color:var(--celeste);opacity:.5;">✦</span>
+              <span class="sparkle" style="left:70px;top:720px;font-size:32px;color:var(--rosa);">✿</span>
+
+              <img class="logo" src="file:///Users/mica/Downloads/Juanitas Design System/assets/juanitas-logo.png" alt="juanitas">
+
+              <div style="margin-top:44px;">
+                <h1 style="font-weight:800;font-size:72px;line-height:.95;letter-spacing:-.02em;color:var(--tinta);margin:0 0 14px;">
+                  ¿Dudas con<br>el <span class="mark-a">talle?</span>
+                </h1>
+                <p style="font-weight:600;font-size:40px;color:var(--fg2);margin:0 0 44px;line-height:1.2;">
+                  Te ayudamos a elegir. 💕
+                </p>
+              </div>
+
+              <!-- Referencia imagen de guía de talles (real) -->
+              <!-- Foto full-height derecha -->
+              <img src="file:///Users/mica/Downloads/H63A9256.jpg"
+                alt="Juanitas producto"
+                style="position:absolute;right:0;top:0;width:500px;height:1080px;
+                  object-fit:cover;object-position:center top;">
+              <!-- gradiente de fusión izquierda -->
+              <div style="position:absolute;right:360px;top:0;width:220px;height:1080px;
+                background:linear-gradient(to right, var(--crema), transparent);pointer-events:none;"></div>
+
+              <!-- Talles grid -->
+              <div style="margin-top:0;max-width:500px;">
+                <p style="font-weight:700;font-size:24px;color:var(--fg3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px;">
+                  Talles disponibles
+                </p>
+                <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:36px;">
+                  <div style="background:var(--azul-soft);color:var(--azul);font-weight:700;font-size:22px;padding:10px 18px;border-radius:999px;">1 · S</div>
+                  <div style="background:var(--azul-soft);color:var(--azul);font-weight:700;font-size:22px;padding:10px 18px;border-radius:999px;">2 · M</div>
+                  <div style="background:var(--azul-soft);color:var(--azul);font-weight:700;font-size:22px;padding:10px 18px;border-radius:999px;">3 · L</div>
+                  <div style="background:var(--azul-soft);color:var(--azul);font-weight:700;font-size:22px;padding:10px 18px;border-radius:999px;">4 · XL</div>
+                  <div style="background:var(--azul-soft);color:var(--azul);font-weight:700;font-size:22px;padding:10px 18px;border-radius:999px;">5 · XXL</div>
+                  <div style="background:var(--azul-soft);color:var(--azul);font-weight:700;font-size:22px;padding:10px 18px;border-radius:999px;">6 · 3XL</div>
+                  <div style="background:var(--azul-soft);color:var(--azul);font-weight:700;font-size:22px;padding:10px 18px;border-radius:999px;">7 · 4XL</div>
+                  <div style="background:var(--azul-soft);color:var(--azul);font-weight:700;font-size:22px;padding:10px 18px;border-radius:999px;">8 · 5XL</div>
+                </div>
+              </div>
+
+              <!-- Beneficio envío -->
+              <div style="position:absolute;left:70px;bottom:100px;display:flex;flex-direction:column;gap:16px;">
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <span style="width:14px;height:14px;background:var(--verde);border-radius:50%;flex-shrink:0;"></span>
+                  <span style="font-weight:600;font-size:28px;color:var(--tinta);">Envío gratis desde $50.000</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:14px;">
+                  <span style="width:14px;height:14px;background:var(--azul);border-radius:50%;flex-shrink:0;"></span>
+                  <span style="font-weight:600;font-size:28px;color:var(--tinta);">Cambios sin drama</span>
+                </div>
+                <span class="pill" style="margin-top:8px;font-size:28px;padding:16px 36px;">Encontrá tu talle →</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="ad-meta">
+          <span class="name">PLACA_OBJECION-TALLES_GENERAL_V1</span>
+          <span class="desc">Guía de talles · objeción principal</span>
+          <span class="format">1080×1080 · Feed / Ad</span>
+        </div>
+      </div>
+
+      <!-- AD A3: RECORDATORIO PACKS -->
+      <div class="ad-item">
+        <div class="frame">
+          <div class="inner">
+            <div class="placa safe" style="background: var(--tinta);">
+
+              <span class="sparkle" style="left:880px;top:90px;font-size:48px;color:var(--amarillo);opacity:.6;">✦</span>
+              <span class="sparkle" style="left:60px;top:660px;font-size:34px;color:var(--rosa);opacity:.5;">✿</span>
+              <span class="sparkle" style="right:80px;top:500px;font-size:28px;color:var(--celeste);opacity:.4;">✦</span>
+
+              <img class="logo logo-sm" src="file:///Users/mica/Downloads/Juanitas Design System/assets/juanitas-logo-cream.png" alt="juanitas">
+
+              <!-- Hook -->
+              <div style="margin-top:44px; max-width:520px;">
+                <h1 style="font-weight:800;font-size:64px;line-height:.96;letter-spacing:-.02em;color:#fff;margin:0 0 8px;">
+                  Seguís a
+                </h1>
+                <h1 style="font-weight:900;font-size:76px;line-height:.96;letter-spacing:-.02em;margin:0 0 10px;">
+                  <span class="mark-f">una bombi</span>
+                </h1>
+                <h1 style="font-weight:800;font-size:64px;line-height:.96;letter-spacing:-.02em;color:#fff;margin:0 0 44px;">
+                  de renovar tu cajón.
+                </h1>
+
+                <!-- Pack options -->
+                <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:38px;">
+                  <div style="display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.07);
+                    border-radius:16px;padding:16px 22px;border:1px solid rgba(255,255,255,.12);">
+                    <span style="font-weight:900;font-size:44px;color:var(--amarillo);min-width:70px;">x3</span>
+                    <div>
+                      <p style="font-weight:700;font-size:26px;color:#fff;margin:0;">Pack x3 bombis</p>
+                      <p style="font-weight:500;font-size:20px;color:rgba(255,255,255,.6);margin:0;">El más vendido</p>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:16px;background:rgba(229,25,127,.12);
+                    border-radius:16px;padding:16px 22px;border:1px solid rgba(229,25,127,.3);">
+                    <span style="font-weight:900;font-size:44px;color:var(--fucsia);min-width:70px;">x6</span>
+                    <div>
+                      <p style="font-weight:700;font-size:26px;color:#fff;margin:0;">Pack x6 bombis</p>
+                      <p style="font-weight:500;font-size:20px;color:var(--fucsia);margin:0;">Más ahorro ✦</p>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.07);
+                    border-radius:16px;padding:16px 22px;border:1px solid rgba(255,255,255,.12);">
+                    <span style="font-weight:900;font-size:44px;color:var(--celeste);min-width:70px;">x12</span>
+                    <div>
+                      <p style="font-weight:700;font-size:26px;color:#fff;margin:0;">Pack x12 bombis</p>
+                      <p style="font-weight:500;font-size:20px;color:rgba(255,255,255,.6);margin:0;">Cajón completo</p>
+                    </div>
+                  </div>
+                </div>
+
+                <span class="pill">Terminá tu compra →</span>
+              </div>
+
+              <!-- Foto real derecha -->
+              <img src="file:///Users/mica/Downloads/H63A9230.jpg"
+                alt="Juanitas negro"
+                style="position:absolute;right:0;top:0;width:430px;height:1080px;
+                  object-fit:cover;object-position:center top;">
+              <div style="position:absolute;right:290px;top:0;width:200px;height:1080px;
+                background:linear-gradient(to right, var(--tinta), transparent);pointer-events:none;"></div>
+
+            </div>
+          </div>
+        </div>
+        <div class="ad-meta">
+          <span class="name">PLACA_RECORDATORIO_PACKS_V1</span>
+          <span class="desc">Opciones de pack x3/x6/x12</span>
+          <span class="format">1080×1080 · Feed / Ad</span>
+        </div>
+      </div>
+
+      <!-- AD A4: CATALOGO MAS VENDIDOS (carrusel slide 1) -->
+      <div class="ad-item">
+        <div class="frame">
+          <div class="inner">
+            <div class="placa" style="background: var(--azul); padding: 0; display:flex; flex-direction:column;">
+
+              <!-- Foto full bleed top -->
+              <div style="flex:1;position:relative;overflow:hidden;">
+                <img src="file:///Users/mica/Downloads/H63A9222.jpg"
+                  alt="Juanitas editorial" style="width:100%;height:100%;object-fit:cover;object-position:center top;">
+                <!-- Gradiente tinta abajo -->
+                <div style="position:absolute;left:0;right:0;bottom:0;height:480px;
+                  background:linear-gradient(to top, var(--azul) 0%, rgba(59,110,197,.75) 25%, rgba(59,110,197,.2) 55%, transparent);">
+                </div>
+                <!-- Logo top -->
+                <div style="position:absolute;top:56px;left:56px;">
+                  <img class="logo-sm" src="file:///Users/mica/Downloads/Juanitas Design System/assets/juanitas-logo-cream.png" alt="juanitas" style="height:52px;">
+                </div>
+                <!-- Badge -->
+                <div style="position:absolute;top:56px;right:56px;
+                  background:var(--fucsia);color:#fff;font-weight:800;font-size:28px;
+                  padding:12px 24px;border-radius:999px;">
+                  LO MÁS QUERIDO
+                </div>
+              </div>
+
+              <!-- Texto bottom -->
+              <div style="padding:52px 64px 64px;position:relative;z-index:2;">
+                <span class="hand" style="font-size:52px;color:var(--amarillo);margin-bottom:6px;display:block;">
+                  los básicos que no pueden faltar
+                </span>
+                <h1 style="font-weight:800;font-size:80px;line-height:.95;letter-spacing:-.025em;color:#fff;margin:0 0 28px;">
+                  <span class="mark-t">COLALESS</span><br>TIRO ALTO
+                </h1>
+                <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+                  <span class="pill pill-light" style="font-size:26px;padding:14px 32px;">Ver la colección →</span>
+                  <span style="font-weight:600;font-size:24px;color:rgba(255,255,255,.7);">Envío gratis +$50.000</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="ad-meta">
+          <span class="name">CARRUSEL_CATALOGO_MAS-VENDIDOS_V1</span>
+          <span class="desc">Slide 1 — Colaless tiro alto</span>
+          <span class="format">1080×1080 · Carrusel</span>
+        </div>
+      </div>
+
+    </div><!-- /grid A -->
+  </div><!-- /campaign A -->
+
+  <!-- ============================================================
+       CAMPAÑA B — RECOMPRA (3 ads)
+  ============================================================ -->
+  <div class="campaign-group">
+    <div class="campaign-label b">
+      <div class="dot"></div>
+      Campaña B · JUANITAS_META_RECOMPRA_RENOVA-TU-CAJON_JUN2026
+    </div>
+    <div class="grid">
+
+      <!-- AD B1: RECOMPRA CAJON -->
+      <div class="ad-item">
+        <div class="frame">
+          <div class="inner">
+            <div class="placa safe" style="background: var(--rosa-soft);">
+
+              <span class="sparkle" style="left:880px;top:70px;font-size:56px;color:var(--fucsia);opacity:.25;">✦</span>
+              <span class="sparkle" style="left:60px;top:760px;font-size:40px;color:var(--amarillo);opacity:.5;">✦</span>
+
+              <img class="logo" src="file:///Users/mica/Downloads/Juanitas Design System/assets/juanitas-logo.png" alt="juanitas">
+
+              <!-- Hook principal -->
+              <div style="margin-top:50px;max-width:560px;">
+                <span class="hand" style="font-size:54px;color:var(--coral);">ya pasaron unos meses...</span>
+                <h1 style="font-weight:800;font-size:82px;line-height:.94;letter-spacing:-.025em;color:var(--tinta);margin:14px 0 32px;">
+                  ¿Hace cuánto<br>no renovás<br>tu <span class="mark-f">cajón?</span>
+                </h1>
+
+                <!-- Beneficios -->
+                <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:40px;">
+                  <div style="display:flex;align-items:center;gap:16px;">
+                    <span style="color:var(--fucsia);font-size:32px;">✿</span>
+                    <span style="font-weight:600;font-size:30px;color:var(--fg1);">Pack x3 desde $75.900</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:16px;">
+                    <span style="color:var(--verde);font-size:32px;">✿</span>
+                    <span style="font-weight:600;font-size:30px;color:var(--fg1);">Envío gratis desde $50.000</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:16px;">
+                    <span style="color:var(--azul);font-size:32px;">✿</span>
+                    <span style="font-weight:600;font-size:30px;color:var(--fg1);">3 y 6 cuotas sin interés</span>
+                  </div>
+                </div>
+
+                <span class="pill">Renovalo ahora →</span>
+              </div>
+
+              <!-- Foto real derecha -->
+              <img src="file:///Users/mica/Downloads/H63A9338.jpg"
+                alt="Juanitas producto" style="position:absolute;right:40px;top:160px;width:420px;height:860px;
+                  object-fit:cover;object-position:center top;border-radius:32px;box-shadow:var(--sh-lg);">
+
+            </div>
+          </div>
+        </div>
+        <div class="ad-meta">
+          <span class="name">PLACA_RECOMPRA_CAJON_V1</span>
+          <span class="desc">Winback · ciclo de reposición 60-180d</span>
+          <span class="format">1080×1080 · Feed / Ad</span>
+        </div>
+      </div>
+
+      <!-- AD B2: CROSSSELL PACK X6 -->
+      <div class="ad-item">
+        <div class="frame">
+          <div class="inner">
+            <!-- REDISEÑO: foto hero full bleed, tipografía grande, pack x6 protagonista -->
+            <div class="placa" style="background:var(--tinta);padding:0;overflow:hidden;">
+
+              <!-- Foto full bleed -->
+              <img src="file:///Users/mica/Downloads/H63A9261.jpg"
+                style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;opacity:.55;">
+
+              <!-- Gradiente bottom fuerte para texto -->
+              <div style="position:absolute;left:0;right:0;bottom:0;height:640px;
+                background:linear-gradient(to top, rgba(40,40,47,.97) 30%, rgba(40,40,47,.6) 65%, transparent);
+                pointer-events:none;"></div>
+
+              <!-- Logo + badge top -->
+              <div style="position:absolute;top:64px;left:70px;right:70px;display:flex;justify-content:space-between;align-items:center;">
+                <img src="file:///Users/mica/Downloads/Juanitas Design System/assets/juanitas-logo-white.png" alt="juanitas" style="height:52px;">
+                <span style="background:var(--amarillo);color:var(--tinta);font-weight:800;font-size:26px;
+                  padding:10px 24px;border-radius:999px;">✦ Más ahorro</span>
+              </div>
+
+              <!-- Texto hero bottom -->
+              <div style="position:absolute;left:70px;right:70px;bottom:80px;">
+                <span class="hand" style="font-size:52px;color:var(--naranja);display:block;margin-bottom:8px;">subí de pack</span>
+                <h1 style="font-weight:900;font-size:140px;line-height:.88;letter-spacing:-.04em;color:#fff;margin:0 0 18px;">
+                  <span style="color:var(--naranja);">x6</span>
+                </h1>
+                <!-- Pack chips -->
+                <div style="display:flex;gap:14px;align-items:center;margin-bottom:36px;">
+                  <span style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.6);font-weight:700;font-size:26px;
+                    padding:10px 22px;border-radius:999px;border:1px solid rgba(255,255,255,.2);">x3</span>
+                  <span style="color:var(--naranja);font-size:32px;font-weight:900;">→</span>
+                  <span style="background:var(--naranja);color:#fff;font-weight:800;font-size:26px;
+                    padding:10px 22px;border-radius:999px;">x6 ✦</span>
+                  <span style="background:rgba(255,255,255,.12);color:rgba(255,255,255,.6);font-weight:700;font-size:26px;
+                    padding:10px 22px;border-radius:999px;border:1px solid rgba(255,255,255,.2);">x12</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;">
+                  <span class="pill" style="font-size:28px;padding:16px 38px;">Subí de pack →</span>
+                  <span style="font-weight:600;font-size:24px;color:rgba(255,255,255,.65);">Envío gratis desde $50.000</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="ad-meta">
+          <span class="name">PLACA_CROSSSELL_PACKX6_V1</span>
+          <span class="desc">Cross-sell x3 → x6 por historial</span>
+          <span class="format">1080×1080 · Feed / Ad</span>
+        </div>
+      </div>
+
+      <!-- AD B3: EMOCIONAL COMODIDAD -->
+      <div class="ad-item">
+        <div class="frame">
+          <div class="inner">
+            <div class="placa" style="background: var(--tinta); padding:0; overflow:hidden;">
+
+              <!-- Foto full -->
+              <div style="position:absolute;inset:0;">
+                <img src="file:///Users/mica/Downloads/H63A9222.jpg"
+                  alt="Juanitas editorial" style="width:100%;height:100%;object-fit:cover;object-position:center top;opacity:.5;">
+              </div>
+
+              <!-- Gradiente bottom -->
+              <div style="position:absolute;left:0;right:0;bottom:0;height:700px;
+                background:linear-gradient(to top, rgba(40,40,47,.96) 20%, transparent);">
+              </div>
+
+              <!-- Logo top -->
+              <div style="position:absolute;top:64px;left:70px;">
+                <img src="file:///Users/mica/Downloads/Juanitas Design System/assets/juanitas-logo-white.png"
+                  alt="juanitas" style="height:54px;">
+              </div>
+
+              <!-- Doodles -->
+              <span class="sparkle" style="right:80px;top:80px;font-size:48px;color:var(--rosa);opacity:.5;">✦</span>
+              <span class="sparkle" style="left:80px;top:440px;font-size:34px;color:var(--amarillo);opacity:.4;">✦</span>
+
+              <!-- Texto principal -->
+              <div style="position:absolute;left:70px;right:70px;bottom:80px;">
+                <span class="hand" style="font-size:56px;color:var(--rosa);display:block;margin-bottom:10px;">
+                  las que saben, saben
+                </span>
+                <h1 style="font-weight:800;font-size:92px;line-height:.92;letter-spacing:-.025em;color:#fff;margin:0 0 30px;">
+                  Las que ya eligieron<br><span class="mark-f">Juanitas,</span><br>saben.
+                </h1>
+                <p style="font-weight:500;font-size:32px;color:rgba(255,255,255,.8);margin:0 0 36px;line-height:1.3;">
+                  Comfort diario. Las que compraron, vuelven. 💕
+                </p>
+                <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+                  <span class="pill">Volvé por más →</span>
+                  <span style="font-weight:600;font-size:24px;color:rgba(255,255,255,.6);">Envío gratis +$50.000</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <div class="ad-meta">
+          <span class="name">PLACA_EMOCIONAL_COMODIDAD_V1</span>
+          <span class="desc">Prueba social · recompra emocional</span>
+          <span class="format">1080×1080 · Feed / Ad</span>
+        </div>
+      </div>
+
+    </div><!-- /grid B -->
+  </div><!-- /campaign B -->
+
+  <!-- EXPORT HINT -->
+  <div class="export-hint">
+    <strong>Para exportar a PNG:</strong> abrí DevTools (⌘+⌥+I), seleccioná una <code>.frame .inner</code>, clic derecho → "Capture node screenshot" — te da la imagen a 1080×1080px.<br>
+    O bien: <strong>Window size</strong> a 1080×1080, ocultá el shell de galería y hacé screenshot del <code>.placa</code> individual.<br>
+    Guardá en <code>/Users/mica/centrodemando/creativos/juanitas-remarketing-duo/</code> con el naming del anuncio.
+  </div>
+
+</div><!-- /page -->
+</body>
+</html>

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juanitas · 2 Campañas de Remarketing · Jun 2026</title>
+  <style>
+    :root {
+      --pink: #e91e8c;
+      --pink-light: #fce4f3;
+      --pink-dark: #c0166e;
+      --dark: #1a1a2e;
+      --gray: #4a4a6a;
+      --gray-light: #f5f5fa;
+      --border: #e0e0f0;
+      --green: #22c55e;
+      --amber: #f59e0b;
+      --red: #ef4444;
+      --blue: #3b82f6;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f0f8;
+      color: var(--dark);
+      line-height: 1.6;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--dark) 0%, #2d1b69 50%, #1a1a2e 100%);
+      color: white;
+      padding: 40px 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, rgba(233,30,140,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(233,30,140,0.2);
+      border: 1px solid rgba(233,30,140,0.4);
+      border-radius: 20px;
+      padding: 6px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #f9a8d4;
+      margin-bottom: 16px;
+    }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pink); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle { color: #a0a0c0; font-size: 15px; margin-bottom: 24px; }
+
+    .meta-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #6060a0; }
+    .meta-value { font-size: 14px; font-weight: 600; color: #e0e0ff; }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .status-propuesta { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .status-aprobada { background: rgba(34,197,94,0.2); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    .section {
+      background: white;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--gray-light);
+    }
+
+    .section-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--pink-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .section-title { font-size: 16px; font-weight: 700; }
+    .section-sub { font-size: 13px; color: var(--gray); margin-top: 1px; }
+
+    .section-body { padding: 24px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--gray-light);
+      color: var(--gray);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafe; }
+
+    .roas-high { color: var(--green); font-weight: 700; }
+    .roas-med { color: var(--amber); font-weight: 700; }
+    .roas-low { color: var(--red); font-weight: 700; }
+
+    .insight-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .insight-card {
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .insight-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 4px;
+      height: 100%;
+    }
+
+    .insight-card.green::before { background: var(--green); }
+    .insight-card.amber::before { background: var(--amber); }
+    .insight-card.red::before { background: var(--red); }
+    .insight-card.blue::before { background: var(--blue); }
+
+    .insight-number {
+      font-size: 28px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .insight-card.green .insight-number { color: var(--green); }
+    .insight-card.amber .insight-number { color: var(--amber); }
+    .insight-card.red .insight-number { color: var(--red); }
+    .insight-card.blue .insight-number { color: var(--blue); }
+
+    .insight-label { font-size: 12px; color: var(--gray); font-weight: 500; }
+
+    .campaign-block {
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .campaign-block:last-child { margin-bottom: 0; }
+
+    .campaign-header {
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .campaign-a .campaign-header { background: linear-gradient(135deg, #fce4f3, #fdf0fa); border-bottom: 2px solid #f9c6e8; }
+    .campaign-b .campaign-header { background: linear-gradient(135deg, #e0f0ff, #f0f8ff); border-bottom: 2px solid #bfdbfe; }
+
+    .campaign-name {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(0,0,0,0.07);
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    .campaign-a .campaign-name { color: var(--pink-dark); }
+    .campaign-b .campaign-name { color: #2563eb; }
+
+    .campaign-kpis {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .kpi-pill {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .campaign-a .kpi-pill { background: rgba(233,30,140,0.1); color: var(--pink-dark); }
+    .campaign-b .kpi-pill { background: rgba(37,99,235,0.1); color: #1d4ed8; }
+
+    .adset-list { padding: 0; }
+
+    .adset {
+      border-bottom: 1px solid var(--border);
+      padding: 16px 24px;
+    }
+
+    .adset:last-child { border-bottom: none; }
+
+    .adset-title {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gray);
+      margin-bottom: 6px;
+    }
+
+    .adset-meta { font-size: 13px; color: var(--dark); margin-bottom: 8px; }
+
+    .ad-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+    .ad-item {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      background: var(--gray-light);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+
+    .ad-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .campaign-a .ad-num { background: var(--pink-light); color: var(--pink-dark); }
+    .campaign-b .ad-num { background: #dbeafe; color: #1d4ed8; }
+
+    .ad-content { flex: 1; }
+
+    .ad-name {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      color: var(--gray);
+      margin-bottom: 3px;
+    }
+
+    .ad-hook { font-size: 13px; font-weight: 600; }
+    .ad-copy { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+    .ab-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 700px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      h1 { font-size: 24px; }
+      .meta-row { gap: 16px; }
+    }
+
+    .timeline-list { display: flex; flex-direction: column; gap: 0; }
+
+    .timeline-item {
+      display: flex;
+      gap: 16px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .timeline-item:last-child { border-bottom: none; }
+
+    .timeline-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    .t1 { background: #e0f2fe; color: #0369a1; }
+    .t2 { background: #fef9c3; color: #854d0e; }
+    .t3 { background: #dcfce7; color: #166534; }
+
+    .timeline-label { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+    .timeline-desc { font-size: 13px; color: var(--gray); }
+
+    .alert {
+      display: flex;
+      gap: 12px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .alert-amber { background: #fffbeb; border: 1px solid #fde68a; }
+    .alert-blue { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .alert-red { background: #fef2f2; border: 1px solid #fecaca; }
+    .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .alert-text { color: var(--dark); }
+    .alert-text strong { display: block; margin-bottom: 2px; font-size: 13px; }
+
+    .pending-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+
+    .pending-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      font-size: 13px;
+    }
+
+    .pending-icon { font-size: 16px; flex-shrink: 0; }
+
+    .approval-box {
+      background: linear-gradient(135deg, #1a1a2e, #2d1b69);
+      border-radius: 16px;
+      padding: 32px;
+      text-align: center;
+      color: white;
+      margin-top: 8px;
+    }
+
+    .approval-box h3 { font-size: 20px; margin-bottom: 8px; }
+    .approval-box p { color: #a0a0c0; font-size: 14px; margin-bottom: 20px; }
+
+    .approval-word {
+      display: inline-block;
+      background: rgba(233,30,140,0.15);
+      border: 2px solid var(--pink);
+      border-radius: 12px;
+      padding: 12px 32px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--pink);
+      letter-spacing: 0.1em;
+    }
+
+    .approval-note { margin-top: 16px; font-size: 12px; color: #6060a0; }
+
+    .hallazgo-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .hallazgo {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .hallazgo.ok { border-left: 4px solid var(--green); }
+    .hallazgo.warn { border-left: 4px solid var(--amber); }
+    .hallazgo.gap { border-left: 4px solid var(--pink); }
+
+    .h-num {
+      font-size: 20px;
+      font-weight: 800;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .hallazgo.ok .h-num { color: var(--green); }
+    .hallazgo.warn .h-num { color: var(--amber); }
+    .hallazgo.gap .h-num { color: var(--pink); }
+
+    .utm-box {
+      background: var(--gray-light);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--gray);
+      word-break: break-all;
+      line-height: 1.8;
+      margin-top: 8px;
+    }
+
+    .utm-key { color: var(--pink-dark); font-weight: 600; }
+
+    footer {
+      background: var(--dark);
+      color: #6060a0;
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-inner">
+    <div class="brand-badge"><div class="dot"></div> Juanitas · Meta Ads</div>
+    <h1>2 Campañas de Remarketing</h1>
+    <div class="subtitle">Funnel Caliente · Recompra "Renová tu cajón" · Junio 2026</div>
+    <div class="meta-row">
+      <div class="meta-item">
+        <span class="meta-label">Cuenta analizada</span>
+        <span class="meta-value">1250953146394306 · Juanitas | Meta Partner</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Destino de prueba</span>
+        <span class="meta-value">1137471693099903 · Cuenta test</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Fecha</span>
+        <span class="meta-value">12 Jun 2026</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Estado</span>
+        <span class="status-badge status-propuesta">⏳ Propuesta</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- DIAGNÓSTICO NUMÉRICO -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">📊</div>
+      <div>
+        <div class="section-title">Diagnóstico de cuenta</div>
+        <div class="section-sub">Últimos 30 días · 13-may → 11-jun-2026 · Fuente: MCP Meta + CSV Drive</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="insight-grid" style="margin-bottom:24px;">
+        <div class="insight-card green">
+          <div class="insight-number">4,58</div>
+          <div class="insight-label">ROAS cuenta (blended)</div>
+        </div>
+        <div class="insight-card blue">
+          <div class="insight-number">$15.213</div>
+          <div class="insight-label">CPA promedio</div>
+        </div>
+        <div class="insight-card amber">
+          <div class="insight-number">816</div>
+          <div class="insight-label">Compras totales</div>
+        </div>
+        <div class="insight-card amber">
+          <div class="insight-number">$12,4M</div>
+          <div class="insight-label">Inversión total (ARS)</div>
+        </div>
+        <div class="insight-card blue">
+          <div class="insight-number">$4.727</div>
+          <div class="insight-label">CPM promedio</div>
+        </div>
+        <div class="insight-card green">
+          <div class="insight-number">3,22%</div>
+          <div class="insight-label">CTR promedio</div>
+        </div>
+      </div>
+
+      <h4 style="font-size:13px;font-weight:700;color:var(--gray);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.06em;">Historial de remarketing (ventana 90d · nivel conjunto)</h4>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Campaña</th>
+              <th>Audiencia</th>
+              <th>Inversión</th>
+              <th>Compras</th>
+              <th>CPA</th>
+              <th>ROAS</th>
+              <th>CPM</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>RMK - Cupón LOQUIERO5 - Placas</td>
+              <td>VC+ATC+IC <strong>30D</strong> excl. PUR 30D</td>
+              <td>$70.110</td>
+              <td>10</td>
+              <td>$7.011</td>
+              <td class="roas-high">10,48 ✦</td>
+              <td>$4.860</td>
+            </tr>
+            <tr>
+              <td>RMK - Catálogo always-on <em>(activa)</em></td>
+              <td>VC+ATC+IC <strong>45D</strong> excl. PUR 30D</td>
+              <td>$103.569</td>
+              <td>8</td>
+              <td>$12.946</td>
+              <td class="roas-high">5,01</td>
+              <td>$3.925</td>
+            </tr>
+            <tr>
+              <td>RMK - HOT DAYS 2026 - Catálogo</td>
+              <td>VC+ATC+IC <strong>7D</strong> excl. PUR 30D</td>
+              <td>$119.022</td>
+              <td>3</td>
+              <td>$39.674</td>
+              <td class="roas-low">1,95 ✗</td>
+              <td>$10.024</td>
+            </tr>
+            <tr>
+              <td>CD - Promo x2 Camisetas - Cupón</td>
+              <td>ATC+IC+VW <strong>14D</strong></td>
+              <td>$65.322</td>
+              <td>3</td>
+              <td>$21.774</td>
+              <td class="roas-low">2,35 ✗</td>
+              <td>$6.731</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- HALLAZGOS -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🔍</div>
+      <div>
+        <div class="section-title">Hallazgos confirmados</div>
+        <div class="section-sub">Separados por tipo: dato confirmado / lectura / gap estratégico</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="hallazgo-list">
+        <div class="hallazgo ok">
+          <div class="h-num">1</div>
+          <div>
+            <strong>Fórmula ganadora ya confirmada:</strong> ventana amplia (30-45D) + cupón con urgencia = ROAS 10,48. Las ventanas cortas (7D, 14D) duplican el CPM ($10.000+) porque la audiencia es mínima — no repetir.
+          </div>
+        </div>
+        <div class="hallazgo warn">
+          <div class="h-num">2</div>
+          <div>
+            <strong>Remarketing subinvertido:</strong> solo ~2,4% del gasto ($293k de $12,4M en 30d). La referencia para ecommerce es 25% del presupuesto. Hay margen claro para escalar.
+          </div>
+        </div>
+        <div class="hallazgo gap">
+          <div class="h-num">3</div>
+          <div>
+            <strong>Gap crítico — no existe ninguna campaña de recompra:</strong> todas las RMK excluyen PUR 30D y ninguna apunta a clientas pasadas. Para un producto de reposición con ciclo de 60-90 días y ticket ~$67.138, ese es el mayor agujero de la cuenta.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMPAÑA A -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🎯</div>
+      <div>
+        <div class="section-title">Campaña A — Funnel Caliente</div>
+        <div class="section-sub">Recuperar visitantes y carritos abandonados · KPI: ROAS ≥ 6 y CPA ≤ $15.000 a 14 días</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="campaign-block campaign-a">
+        <div class="campaign-header">
+          <div>
+            <div style="font-size:12px;color:var(--gray);margin-bottom:4px;">Naming Meta</div>
+            <div class="campaign-name">JUANITAS_META_REMARKETING_FUNNEL-CALIENTE_JUN2026</div>
+          </div>
+          <div class="campaign-kpis">
+            <span class="kpi-pill">OUTCOME_SALES</span>
+            <span class="kpi-pill">CBO</span>
+            <span class="kpi-pill">$5.000/día · PAUSADA</span>
+            <span class="ab-badge">⚡ A/B ventana</span>
+          </div>
+        </div>
+
+        <div class="adset-list">
+          <!-- Adset 1 -->
+          <div class="adset">
+            <div class="adset-title">CONJUNTO 1 · VC-ATC-IC-30D_RMK-CALIENTE_ARG</div>
+            <div class="adset-meta">
+              <strong>Audiencia:</strong> VC + ATC + IC últimos 30D · Excluye: PUR 30D · <strong>Región:</strong> Argentina excl. Tierra del Fuego
+            </div>
+            <div class="ad-list">
+              <div class="ad-item">
+                <div class="ad-num campaign-a">1</div>
+                <div class="ad-content">
+                  <div class="ad-name">PLACA_CUPON-URGENCIA_GENERAL_V1</div>
+                  <div class="ad-hook">"Lo dejaste en el carrito. Tu cajón te lo estaba pidiendo."</div>
+                  <div class="ad-copy">Cupón <strong>LOQUIERO5</strong> · Envío gratis a partir de $50.000. CTA: "Usá tu cupón"</div>
+                </div>
+              </div>
+              <div class="ad-item">
+                <div class="ad-num campaign-a">2</div>
+                <div class="ad-content">
+                  <div class="ad-name">PLACA_OBJECION-TALLES_GENERAL_V1</div>
+                  <div class="ad-hook">"¿Dudas con el talle? Te ayudamos a elegir."</div>
+                  <div class="ad-copy">Guía de talles + cambios sin drama. Envío gratis desde $50.000. CTA: "Encontrá tu talle"</div>
+                </div>
+              </div>
+              <div class="ad-item">
+                <div class="ad-num campaign-a">3</div>
+                <div class="ad-content">
+                  <div class="ad-name">PLACA_RECORDATORIO_PACKS_V1</div>
+                  <div class="ad-hook">"Seguís a una bombacha de distancia de renovar tu cajón."</div>
+                  <div class="ad-copy">Beneficio packs x3/x6/x12. CTA: "Terminá tu compra"</div>
+                </div>
+              </div>
+              <div class="ad-item">
+                <div class="ad-num campaign-a">4</div>
+                <div class="ad-content">
+                  <div class="ad-name">CARRUSEL_CATALOGO_MAS-VENDIDOS_V1</div>
+                  <div class="ad-hook">Carrusel de más vendidos (colaless tiro alto, packs)</div>
+                  <div class="ad-copy">Réplica del formato always-on · ROAS referencia: 5,01. Sin texto crítico de promo.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Adset 2 -->
+          <div class="adset">
+            <div class="adset-title">CONJUNTO 2 · VC-ATC-IC-45D_RMK-CALIENTE_ARG <span class="ab-badge" style="margin-left:8px;">A/B vs. Conjunto 1</span></div>
+            <div class="adset-meta">
+              <strong>Audiencia:</strong> VC + ATC + IC últimos 45D · Excluye: PUR 30D · <strong>Región:</strong> Argentina excl. Tierra del Fuego
+            </div>
+            <div style="padding:12px 14px;background:var(--gray-light);border-radius:8px;font-size:13px;color:var(--gray);">
+              Mismos 4 anuncios que Conjunto 1. El A/B mide si la ventana de 45D da más volumen que la de 30D. Referencia: la campaña always-on con ventana 45D hace ROAS 5,01 sola; esperamos que con el cupón de urgencia supere ese número.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="utm-box">
+        <span class="utm-key">UTM Base A:</span> utm_source=meta&amp;utm_medium=paid&amp;
+        utm_campaign=<strong>juanitas_rmk_funnel-caliente_jun2026</strong>&amp;utm_content=[nombre-anuncio]<br>
+        URL destino: https://juanitas.ar/
+      </div>
+
+      <div style="margin-top:12px;padding:12px 16px;background:#fdf0fa;border-radius:8px;font-size:13px;border:1px solid #f9c6e8;">
+        <strong>Apuesta del A/B:</strong> La placa de cupón (patrón LOQUIERO5, ROAS 10,48) debería ganar en conversión. La placa de talles debería ganar en CTR y CTR unique aunque convierta menos directo — sirve para audiencias con alta intención pero miedo al error de talle.
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMPAÑA B -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">🔁</div>
+      <div>
+        <div class="section-title">Campaña B — Recompra "Renová tu cajón"</div>
+        <div class="section-sub">Ciclo de reposición 60-180 días + winback 180-365 días · No existe benchmark previo — es el gap</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="campaign-block campaign-b">
+        <div class="campaign-header">
+          <div>
+            <div style="font-size:12px;color:var(--gray);margin-bottom:4px;">Naming Meta</div>
+            <div class="campaign-name">JUANITAS_META_RECOMPRA_RENOVA-TU-CAJON_JUN2026</div>
+          </div>
+          <div class="campaign-kpis">
+            <span class="kpi-pill">OUTCOME_SALES</span>
+            <span class="kpi-pill">CBO</span>
+            <span class="kpi-pill">$5.000/día · PAUSADA</span>
+          </div>
+        </div>
+
+        <div class="adset-list">
+          <!-- Adset B1 -->
+          <div class="adset">
+            <div class="adset-title">CONJUNTO 1 · PUR-60-180D_RECOMPRA_ARG</div>
+            <div class="adset-meta">
+              <strong>Audiencia:</strong> Compradoras 180D · Excluye: PUR 60D · <strong>Región:</strong> Argentina excl. Tierra del Fuego<br>
+              <em style="font-size:12px;color:var(--gray);">Ciclo de reposición cumplido (60-90-120 días) — el momento de la recompra natural.</em>
+            </div>
+            <div class="ad-list">
+              <div class="ad-item">
+                <div class="ad-num campaign-b">1</div>
+                <div class="ad-content">
+                  <div class="ad-name">PLACA_RECOMPRA_CAJON_V1</div>
+                  <div class="ad-hook">"¿Hace cuánto no renovás tu cajón?"</div>
+                  <div class="ad-copy">Packs x3/x6. CTA: "Renovalo ahora". Frase winback validada en la ficha de marca.</div>
+                </div>
+              </div>
+              <div class="ad-item">
+                <div class="ad-num campaign-b">2</div>
+                <div class="ad-content">
+                  <div class="ad-name">PLACA_CROSSSELL_PACKX6_V1</div>
+                  <div class="ad-hook">"Si el pack x3 te quedó corto, pasá al x6."</div>
+                  <div class="ad-copy">Cross-sell por historial de compra. CTA: "Subí de pack"</div>
+                </div>
+              </div>
+              <div class="ad-item">
+                <div class="ad-num campaign-b">3</div>
+                <div class="ad-content">
+                  <div class="ad-name">PLACA_EMOCIONAL_COMODIDAD_V1</div>
+                  <div class="ad-hook">"Las que ya eligieron Juanitas, saben."</div>
+                  <div class="ad-copy">Prueba social + comodidad diaria. CTA: "Volvé por más"</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Adset B2 -->
+          <div class="adset">
+            <div class="adset-title">CONJUNTO 2 · PUR-180-365D_WINBACK_ARG</div>
+            <div class="adset-meta">
+              <strong>Audiencia:</strong> Compradoras 365D · Excluye: PUR 180D · <strong>Región:</strong> Argentina excl. Tierra del Fuego<br>
+              <em style="font-size:12px;color:var(--gray);">Clientas dormidas — ventana más amplia, mensaje winback de recuperación.</em>
+            </div>
+            <div style="padding:12px 14px;background:var(--gray-light);border-radius:8px;font-size:13px;color:var(--gray);">
+              Mismos 3 anuncios que Conjunto 1. En el winback (180-365D) esperamos menor CTR pero higher intent — quien compró hace más de 6 meses y aún recuerda la marca.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="utm-box">
+        <span class="utm-key">UTM Base B:</span> utm_source=meta&amp;utm_medium=paid&amp;
+        utm_campaign=<strong>juanitas_recompra_renova-tu-cajon_jun2026</strong>&amp;utm_content=[nombre-anuncio]<br>
+        URL destino: https://juanitas.ar/
+      </div>
+
+      <div style="margin-top:12px;padding:12px 16px;background:#eff6ff;border-radius:8px;font-size:13px;border:1px solid #bfdbfe;">
+        <strong>KPI de éxito (es test):</strong> CPA ≤ $15.213 (benchmark blended de la cuenta) y ROAS ≥ 4,58 a 14 días. Si valida, este es el benchmark nuevo para recompra — una campaña que no existía y cubre el gap más grande de la cuenta.
+      </div>
+    </div>
+  </div>
+
+  <!-- MONITOREO -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">⏱️</div>
+      <div>
+        <div class="section-title">Métricas a monitorear</div>
+        <div class="section-sub">Alertas y decisiones por momento post-activación</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="timeline-list">
+        <div class="timeline-item">
+          <div class="timeline-dot t1">24h</div>
+          <div>
+            <div class="timeline-label">24 / 48 / 72 horas</div>
+            <div class="timeline-desc">
+              Verificar entrega activa. <strong>Alerta de CPM:</strong> si supera ~$8.000 en RMK, señal de audiencia chica — patrón HOT DAYS (CPM $10.024, ROAS 1,95). <strong>Alerta de frecuencia:</strong> si supera 4 en los primeros 3 días.
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot t2">7d</div>
+          <div>
+            <div class="timeline-label">7 días</div>
+            <div class="timeline-desc">
+              Comparar CPA y ROAS preliminar vs. métricas de éxito. CTR de cada placa para el A/B (decisión: cuál escalar, cuál pausar). Revisar si hay solapamiento con "RMK - Cupón LOQUIERO5 FINDE LARGO" en la cuenta real.
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot t3">14d</div>
+          <div>
+            <div class="timeline-label">14 días (post-aprendizaje)</div>
+            <div class="timeline-desc">
+              <strong>Campaña A:</strong> si ROAS ≥ 6, escalar hacia el 25% de referencia del presupuesto total de la cuenta, gradualmente. <strong>Campaña B:</strong> si CPA ≤ $15.213, es la prueba que la recompra paga — documentar como benchmark nuevo y escalar. Decisión final sobre naming, duplicados y estructura permanente.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIMITACIONES DE LA PRUEBA -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">⚠️</div>
+      <div>
+        <div class="section-title">Limitaciones del borrador en cuenta de test</div>
+        <div class="section-sub">La cuenta 1137471693099903 no tiene el píxel de Juanitas</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="alert alert-blue" style="background:#f0fdf4;border-color:#86efac;">
+        <div class="alert-icon">✅</div>
+        <div class="alert-text">
+          <strong>Píxel conectado en la cuenta test</strong>
+          El píxel de Juanitas (761024352451659) ya está conectado a la cuenta <code>1137471693099903</code> (confirmado por Mica 2026-06-12). Las audiencias reales — VC/ATC/IC y compradoras — se suben tal cual están documentadas, sin placeholder.
+        </div>
+      </div>
+      <div class="alert alert-blue" style="background:#f0fdf4;border-color:#86efac;">
+        <div class="alert-icon">✅</div>
+        <div class="alert-text">
+          <strong>No pisa campañas activas</strong>
+          La Campaña A no solapa con "RMK - Cupón LOQUIERO5 FINDE LARGO" (confirmado por Mica 2026-06-12).
+        </div>
+      </div>
+      <div class="alert alert-blue">
+        <div class="alert-icon">🔒</div>
+        <div class="alert-text">
+          <strong>Todo sube PAUSADO, sin excepción</strong>
+          Nada se activa sin la orden explícita <strong>"ACTIVAR [nombre de campaña]"</strong> de Mica.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PENDIENTES -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">📋</div>
+      <div>
+        <div class="section-title">Datos pendientes de Mica</div>
+        <div class="section-sub">No bloquean el borrador · Sí bloquean la activación real</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div style="padding:14px 18px;background:#f0fdf4;border-radius:10px;border:1px solid #86efac;font-size:13px;line-height:1.8;">
+        ✅ <strong>Cupón:</strong> LOQUIERO5<br>
+        ✅ <strong>Envío gratis:</strong> a partir de $50.000<br>
+        ✅ <strong>No pisa</strong> a "RMK - Cupón LOQUIERO5 FINDE LARGO"<br>
+        ✅ <strong>Píxel conectado</strong> en cuenta test — audiencias reales disponibles
+      </div>
+    </div>
+  </div>
+
+  <!-- APROBACIÓN -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-icon">✅</div>
+      <div>
+        <div class="section-title">Puerta de aprobación</div>
+        <div class="section-sub">Regla crítica del Centro de Mando — sin aprobación explícita, nada se sube</div>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="approval-box">
+        <h3>¿Aprobás las 2 campañas?</h3>
+        <p>Con esta palabra subo las 2 campañas a la cuenta test <code>1137471693099903</code> en estado <strong>PAUSADO</strong>.<br>Nada se activa hasta que digas "ACTIVAR [nombre de campaña]".</p>
+        <div class="approval-word">APROBADO</div>
+        <div class="approval-note">
+          "Dale", "me gusta", "ok", "después la veo" NO son aprobación.<br>
+          Luego de la subida te entrego todos los IDs de Meta y actualizo el estado a SUBIDA.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Mateo · Agente Meta Ads · Centro de Mando Mica · Generado 2026-06-12 · Cuenta analizada: 1250953146394306 · Datos: MCP Meta + Drive PLANILLA MADRE MANUS
+</footer>
+
+</body>
+</html>
