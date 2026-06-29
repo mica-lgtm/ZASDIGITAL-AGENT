@@ -7,7 +7,7 @@ import { exportElementAsPng } from '../../utils/exportPng.js'
 export default function MedidasTool() {
   const [raw, setRaw] = useState('')
   const [nombreProducto, setNombreProducto] = useState('')
-  const [tipoGarment, setTipoGarment] = useState('falda')
+  const [tipoGarment, setTipoGarment] = useState('pollera-mujer')
   const [loading, setLoading] = useState(false)
   const previewRef = useRef(null)
 

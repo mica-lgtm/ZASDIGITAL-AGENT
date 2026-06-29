@@ -1,12 +1,11 @@
 export default function TableInput({ value, onChange, nombreProducto, onNombreChange, tipoGarment, onTipoGarmentChange }) {
   const garments = [
-    { value: 'falda', label: 'Falda / Pollera' },
-    { value: 'jean', label: 'Jean / Pantalón' },
-    { value: 'pantalon', label: 'Pantalón wide leg / jogger' },
-    { value: 'remera', label: 'Remera / Top' },
-    { value: 'buzo', label: 'Buzo / Campera oversized' },
-    { value: 'vestido', label: 'Vestido' },
-    { value: 'saco', label: 'Saco / Blazer' },
+    { value: 'pollera-mujer', label: 'Pollera / Falda' },
+    { value: 'pantalon-mujer', label: 'Pantalón mujer' },
+    { value: 'pantalon-hombre', label: 'Pantalón / Jean hombre' },
+    { value: 'remera-mujer', label: 'Remera / Top / Buzo mujer' },
+    { value: 'remera-hombre', label: 'Remera / Buzo hombre' },
+    { value: 'calzado', label: 'Calzado' },
   ]
 
   return (
