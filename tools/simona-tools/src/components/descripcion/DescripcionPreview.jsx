@@ -1,77 +1,83 @@
 import { forwardRef } from 'react'
 
 const DescripcionPreview = forwardRef(function DescripcionPreview({ values }, ref) {
-  const { nombre, subtitulo, temporada, material, diseno, calce, estilo, cuidados, talleModelo, notaTalles } = values
+  const { nombre, subtitulo, temporada, material, diseno, calce, estilo, cuidados, urlTablaImg, talleModelo, modeloFotoTalle, notaTalles } = values
   const hasDetalles = material || diseno || calce || estilo
   const cuidadosList = cuidados ? cuidados.split(',').map(c => c.trim()).filter(Boolean) : []
 
+  const detalleRow = (label, value) => !value ? null : (
+    <tr key={label} style={{ borderBottom: '1px solid #f0efec' }}>
+      <td style={{ padding: '11px 0', width: 95, verticalAlign: 'top' }}>
+        <span style={{ fontSize: 9, fontWeight: 'bold', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#a2897b' }}>{label}</span>
+      </td>
+      <td style={{ padding: '11px 0', fontSize: 13, color: '#444', lineHeight: 1.6 }}>{value}</td>
+    </tr>
+  )
+
   return (
-    <div
-      ref={ref}
-      style={{
-        fontFamily: "'DM Sans', sans-serif",
-        color: '#111',
-        maxWidth: 680,
-        lineHeight: 1.6,
-        backgroundColor: '#fff',
-        padding: '32px',
-      }}
-    >
-      {/* Header box */}
-      <div style={{ textAlign: 'center', border: '1px solid #C4917A', padding: '20px 28px', marginBottom: 24 }}>
+    <div ref={ref} style={{ fontFamily: "'DM Sans', sans-serif", maxWidth: 680, backgroundColor: '#fff' }}>
+      {/* Header */}
+      <div style={{ background: '#e9eae5', padding: '32px 28px 26px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg,#90263A,#D5C792,#A2897B)' }} />
         {temporada && (
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', color: '#C4917A', textTransform: 'uppercase', marginBottom: 8 }}>
+          <span style={{ display: 'inline-block', border: '1px solid #A2897B', color: '#a2897b', fontSize: 9, fontWeight: 'bold', letterSpacing: '2.5px', textTransform: 'uppercase', padding: '4px 14px', marginBottom: 16 }}>
             {temporada}
-          </div>
+          </span>
         )}
-        {nombre && (
-          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{nombre}</div>
-        )}
-        {subtitulo && (
-          <div style={{ fontSize: 13, fontStyle: 'italic', color: '#C4917A' }}>{subtitulo}</div>
-        )}
+        {nombre && <h2 style={{ fontSize: 22, fontWeight: 600, color: '#3a2a2a', lineHeight: 1.2, margin: '0 0 8px 0' }}>{nombre}</h2>}
+        {subtitulo && <p style={{ color: '#a2897b', fontSize: 13, fontStyle: 'italic', margin: 0 }}>{subtitulo}</p>}
       </div>
 
       {/* Detalles */}
       {hasDetalles && (
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#888', borderBottom: '2px solid #f0ebe6', paddingBottom: 6, marginBottom: 0 }}>
-            DETALLES DE LA PRENDA
-          </div>
+        <div style={{ background: '#ffffff', padding: '24px 28px', marginTop: 2 }}>
+          <p style={{ fontSize: 9, fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase', color: '#90263a', margin: '0 0 18px 0' }}>Detalles de la prenda</p>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            {[['MATERIAL', material], ['DISEÑO', diseno], ['CALCE', calce], ['ESTILO', estilo]].filter(([, v]) => v).map(([label, value]) => (
-              <tr key={label}>
-                <td style={{ padding: '10px 16px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: '#888', width: 90, verticalAlign: 'top' }}>{label}</td>
-                <td style={{ padding: '10px 16px', fontSize: 13, color: '#222', borderBottom: '1px solid #f0ebe6' }}>{value}</td>
-              </tr>
-            ))}
+            <tbody>
+              {detalleRow('Material', material)}
+              {detalleRow('Diseño', diseno)}
+              {detalleRow('Calce', calce)}
+              {detalleRow('Estilo', estilo)}
+            </tbody>
           </table>
         </div>
       )}
 
       {/* Cuidados */}
       {cuidadosList.length > 0 && (
-        <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', background: '#f5f0eb', padding: '10px 16px' }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '2px', textTransform: 'uppercase', color: '#888', marginRight: 8 }}>CUIDADOS</span>
-          {cuidadosList.map((c, i) => (
-            <span key={i} style={{ display: 'inline-block', border: '1px solid #ccc', borderRadius: 4, padding: '3px 10px', fontSize: 11, color: '#444' }}>
-              {c}
-            </span>
-          ))}
+        <div style={{ background: '#e9eae5', padding: '18px 28px', marginTop: 2, display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 9, fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase', color: '#90263a', flexShrink: 0 }}>Cuidados</span>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {cuidadosList.map((c, i) => (
+              <span key={i} style={{ background: '#fff', color: '#555', fontSize: 11, padding: '5px 13px' }}>❦ {c}</span>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Referencia de talle */}
-      {talleModelo && (
-        <div style={{ background: '#C4917A', color: '#fff', padding: '12px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ background: '#fff', color: '#C4917A', fontWeight: 700, fontSize: 11, width: 24, height: 24, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%' }}>A</span>
-          <span style={{ fontSize: 13, fontWeight: 600 }}>REFERENCIA DE TALLE</span>
-          <span style={{ fontSize: 13 }}>{talleModelo}</span>
+      {/* Guía de talles */}
+      {urlTablaImg && (
+        <div style={{ background: '#f7f4f1', padding: '22px 28px 18px', marginTop: 2, borderTop: '1px solid #e0dbd5' }}>
+          <p style={{ fontSize: 9, fontWeight: 'bold', letterSpacing: '2px', textTransform: 'uppercase', color: '#90263a', margin: '0 0 14px 0' }}>Guía de talles</p>
+          <img style={{ display: 'block', width: '100%', height: 'auto' }} src={urlTablaImg} alt={`Guía de talles ${nombre}`} />
         </div>
       )}
 
-      {notaTalles && (
-        <div style={{ fontSize: 12, color: '#888', textAlign: 'center', marginTop: 8 }}>{notaTalles}</div>
+      {/* Referencia + notas */}
+      {(talleModelo || modeloFotoTalle || notaTalles) && (
+        <div style={{ background: '#ffffff', padding: '20px 28px 22px', marginTop: 2, borderBottom: '3px solid #90263A' }}>
+          {talleModelo && (
+            <div style={{ background: '#90263A', padding: '14px 20px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div style={{ width: 38, height: 38, borderRadius: '50%', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 15, fontWeight: 'bold', color: '#90263a' }}>A</div>
+              <div>
+                <p style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: '#d5c792', margin: '0 0 3px 0' }}>Referencia de talle</p>
+                <p style={{ fontSize: 14, color: '#ffffff', fontWeight: 'bold', margin: 0 }}>{talleModelo}</p>
+              </div>
+            </div>
+          )}
+          {modeloFotoTalle && <p style={{ fontSize: 12, fontWeight: 'bold', color: '#1a1a1a', textAlign: 'center', margin: '0 0 10px 0' }}>La modelo de la foto usa talle {modeloFotoTalle}</p>}
+          {notaTalles && <p style={{ fontSize: 11, fontWeight: 600, color: '#1a1a1a', textAlign: 'center', fontStyle: 'italic', margin: 0 }}>{notaTalles}</p>}
+        </div>
       )}
     </div>
   )

@@ -14,7 +14,9 @@ const EMPTY = {
   calce: '',
   estilo: '',
   cuidados: '',
+  urlTablaImg: '',
   talleModelo: '',
+  modeloFotoTalle: '',
   notaTalles: '',
 }
 
