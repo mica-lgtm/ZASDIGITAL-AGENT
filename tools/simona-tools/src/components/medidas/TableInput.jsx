@@ -44,7 +44,7 @@ export default function TableInput({ value, onChange, nombreProducto, onNombreCh
           Tabla de medidas
         </label>
         <p className="text-xs text-gray-400 mb-2">
-          Pegá desde Excel/Sheets (TSV), con pipes | o con espacios. La primera fila es el encabezado.
+          Pegá desde Excel/Sheets (TSV), con pipes |, con espacios, o en formato "Medida: Valor" (una por línea). La primera fila es el encabezado.
         </p>
         <textarea
           value={value}
