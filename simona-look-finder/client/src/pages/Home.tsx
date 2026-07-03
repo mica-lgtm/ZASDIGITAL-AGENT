@@ -10,6 +10,11 @@ const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663489253832/GCNEfm
 const COUPON_CODE = "LOOKCOMPLETO";
 const DISCOUNT_PERCENT = 15;
 
+// Bordó: acento propio del cupón, distinto de la paleta terracota del resto
+// del sitio, para que la promo se note más.
+const BORDO = "#7A1B34";
+const BORDO_LIGHT = "#C24C6B";
+
 // ─── STATIC UI DATA ──────────────────────────────────────────────────────────
 
 const OCCASIONS = [
@@ -364,22 +369,25 @@ function CouponBadge({ remainingMs }: { remainingMs: number | null }) {
   if (remainingMs == null) return null;
   const expired = remainingMs <= 0;
 
-  return (
-    <div
-      className={`w-full border border-dashed font-['Inter',sans-serif] text-xs py-3 text-center flex items-center justify-center gap-2 ${
-        expired ? "border-white/15 bg-white/5 text-white/40" : "border-[#C4A882]/40 bg-[#C4A882]/5 text-[#C4A882]"
-      }`}
-    >
-      {expired ? (
+  if (expired) {
+    return (
+      <div className="w-full border border-dashed border-white/15 bg-white/5 text-white/40 font-['Inter',sans-serif] text-xs py-3 text-center flex items-center justify-center gap-2">
         <span className="tracking-[2px] uppercase font-semibold">Cupón {COUPON_CODE} vencido</span>
-      ) : (
-        <>
-          <span>✦</span>
-          <span className="tracking-[2px] uppercase font-semibold">Cupón {COUPON_CODE} · {DISCOUNT_PERCENT}% off</span>
-          <span className="text-white/40">vence en {formatCountdown(remainingMs)}</span>
-        </>
-      )}
-    </div>
+      </div>
+    );
+  }
+
+  return (
+    <motion.div
+      animate={{ scale: [1, 1.02, 1] }}
+      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+      style={{ backgroundColor: BORDO, borderColor: BORDO_LIGHT, boxShadow: `0 0 18px ${BORDO}80` }}
+      className="w-full border text-white font-['Inter',sans-serif] text-xs py-3.5 text-center flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5"
+    >
+      <span className="text-base leading-none">✦</span>
+      <span className="tracking-[2px] uppercase font-bold">Cupón {COUPON_CODE} · {DISCOUNT_PERCENT}% off</span>
+      <span className="text-white/70">vence en {formatCountdown(remainingMs)}</span>
+    </motion.div>
   );
 }
 
@@ -667,9 +675,14 @@ export default function Home() {
                     </div>
                     {couponActive && (
                       <div className="absolute top-4 right-4">
-                        <span className="text-[9px] font-['Inter',sans-serif] font-bold tracking-[2px] uppercase text-white bg-[#8B6347] px-2 py-1">
+                        <motion.span
+                          animate={{ scale: [1, 1.06, 1] }}
+                          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+                          style={{ backgroundColor: BORDO, boxShadow: `0 0 14px ${BORDO}90` }}
+                          className="inline-block text-[9px] font-['Inter',sans-serif] font-bold tracking-[2px] uppercase text-white px-2 py-1"
+                        >
                           Look completo {DISCOUNT_PERCENT}% off
-                        </span>
+                        </motion.span>
                       </div>
                     )}
                     <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
@@ -682,7 +695,7 @@ export default function Home() {
                         {couponActive ? (
                           <>
                             <p className="text-xs font-['Inter',sans-serif] text-white/40 line-through">{calcTotal(look.products)}</p>
-                            <p className="text-xl font-bold text-[#C4A882]">{calcDiscountedTotal(look.products)}</p>
+                            <p className="text-xl font-bold" style={{ color: BORDO_LIGHT }}>{calcDiscountedTotal(look.products)}</p>
                           </>
                         ) : (
                           <p className="text-xl font-bold text-white">{calcTotal(look.products)}</p>
