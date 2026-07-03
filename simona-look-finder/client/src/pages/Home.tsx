@@ -386,7 +386,7 @@ function CouponBadge({ remainingMs }: { remainingMs: number | null }) {
     >
       <span className="text-base leading-none">✦</span>
       <span className="tracking-[2px] uppercase font-bold">Cupón {COUPON_CODE} · {DISCOUNT_PERCENT}% off</span>
-      <span className="text-white/70">vence en {formatCountdown(remainingMs)}</span>
+      <span className="text-sm font-bold tabular-nums">vence en {formatCountdown(remainingMs)}</span>
     </motion.div>
   );
 }
