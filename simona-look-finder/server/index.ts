@@ -17,6 +17,13 @@ const TN_HEADERS = {
   "User-Agent": "Simona-LookFinder (mica@zasdigital.com)",
 };
 
+// Cupón "LOOK COMPLETO": 15% off automático al comprar el look entero desde
+// el Look Finder. Se aplica como discount directo en el draft order (Tienda
+// Nube no soporta aplicar cupones por código vía API), no requiere que la
+// clienta ingrese nada en el checkout.
+const LOOKCOMPLETO_COUPON = "LOOKCOMPLETO";
+const LOOKCOMPLETO_DISCOUNT_PERCENT = 15;
+
 // ─── LOOK DEFINITIONS ───────────────────────────────────────────────────────
 // Handles verificados contra la API de Tienda Nube real.
 
@@ -350,6 +357,9 @@ async function startServer() {
           payment_status: "unpaid",
           sale_channel: "Look Finder Web",
           products: cartItems,
+          discount: String(LOOKCOMPLETO_DISCOUNT_PERCENT),
+          discount_type: "percentage",
+          note: `Cupón ${LOOKCOMPLETO_COUPON} aplicado automáticamente (${LOOKCOMPLETO_DISCOUNT_PERCENT}% off look completo)`,
         };
         const r = await fetch(`${TN_BASE}/draft_orders`, {
           method: "POST",

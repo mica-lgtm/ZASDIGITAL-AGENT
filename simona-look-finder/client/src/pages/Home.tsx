@@ -5,8 +5,10 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-mo
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663489253832/GCNEfmb632ab7e3kLMogtf/simona_hero_bg-gSwKLDuL9uBpMGpRgbPyqf.webp";
 
-// Cupón manual: no se aplica solo, la clienta lo ingresa a mano en el checkout de Tienda Nube.
-const COUPON_CODE = "INVIERNO15";
+// Cupón "look completo": se aplica automáticamente como discount en el draft
+// order al comprar (ver /api/cart) — la clienta no tiene que ingresar nada.
+const COUPON_CODE = "LOOKCOMPLETO";
+const DISCOUNT_PERCENT = 15;
 
 // ─── STATIC UI DATA ──────────────────────────────────────────────────────────
 
@@ -82,9 +84,17 @@ function useCatalog() {
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
+function sumPrices(products: Product[]): number {
+  return products.reduce((acc, p) => acc + parseInt(p.price.replace(/\D/g, ""), 10), 0);
+}
+
 function calcTotal(products: Product[]): string {
-  const total = products.reduce((acc, p) => acc + parseInt(p.price.replace(/\D/g, ""), 10), 0);
-  return `$${total.toLocaleString("es-AR")}`;
+  return `$${sumPrices(products).toLocaleString("es-AR")}`;
+}
+
+function calcDiscountedTotal(products: Product[]): string {
+  const discounted = Math.round(sumPrices(products) * (1 - DISCOUNT_PERCENT / 100));
+  return `$${discounted.toLocaleString("es-AR")}`;
 }
 
 // Resuelve el look a mostrar: si el pedido (ocasión+estilo) no tiene productos
@@ -280,38 +290,17 @@ function ProgressBar({ step }: { step: number }) {
   );
 }
 
-// ─── COUPON BUTTON ───────────────────────────────────────────────────────────
+// ─── COUPON BADGE ────────────────────────────────────────────────────────────
+// El cupón se aplica solo (discount automático en el draft order de /api/cart)
+// al tocar "Comprar el look" — esto es solo informativo, no hay nada que copiar.
 
-function CouponButton() {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(COUPON_CODE).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      // fallback: select text
-    });
-  };
-
+function CouponBadge() {
   return (
-    <button
-      onClick={handleCopy}
-      className="w-full border border-dashed border-[#C4A882]/40 hover:border-[#C4A882] bg-[#C4A882]/5 text-[#C4A882] font-['Inter',sans-serif] text-xs py-3 text-center transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
-    >
-      {copied ? (
-        <>
-          <span>✓</span>
-          <span className="tracking-[2px] uppercase font-medium">Cupón copiado</span>
-        </>
-      ) : (
-        <>
-          <span className="text-white/40">Usá el cupón en el checkout:</span>
-          <span className="font-bold tracking-[2px]">{COUPON_CODE}</span>
-          <span>⎘</span>
-        </>
-      )}
-    </button>
+    <div className="w-full border border-dashed border-[#C4A882]/40 bg-[#C4A882]/5 text-[#C4A882] font-['Inter',sans-serif] text-xs py-3 text-center flex items-center justify-center gap-2">
+      <span>✦</span>
+      <span className="tracking-[2px] uppercase font-semibold">Cupón {COUPON_CODE} aplicado</span>
+      <span className="text-white/40">· {DISCOUNT_PERCENT}% off ya incluido</span>
+    </div>
   );
 }
 
@@ -605,7 +594,8 @@ export default function Home() {
                       </div>
                       <div className="text-right">
                         <p className="text-[10px] font-['Inter',sans-serif] text-white/50 mb-0.5">Total</p>
-                        <p className="text-xl font-bold text-white">{calcTotal(look.products)}</p>
+                        <p className="text-xs font-['Inter',sans-serif] text-white/40 line-through">{calcTotal(look.products)}</p>
+                        <p className="text-xl font-bold text-[#C4A882]">{calcDiscountedTotal(look.products)}</p>
                       </div>
                     </div>
                   </div>
@@ -694,8 +684,8 @@ export default function Home() {
                       </motion.p>
                     )}
 
-                    {/* Cupón: se ingresa a mano en el checkout de Tienda Nube */}
-                    <CouponButton />
+                    {/* Cupón: se aplica automáticamente al comprar, esto es solo informativo */}
+                    <CouponBadge />
 
                     {/* Secondary: ver colección */}
                     <a

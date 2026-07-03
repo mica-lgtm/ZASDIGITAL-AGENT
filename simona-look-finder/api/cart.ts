@@ -1,5 +1,13 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getProductsByHandle, LOOK_DEFS, ACCESS_TOKEN, TN_BASE, TN_HEADERS } from "./_lib/tn.js";
+import {
+  getProductsByHandle,
+  LOOK_DEFS,
+  ACCESS_TOKEN,
+  TN_BASE,
+  TN_HEADERS,
+  LOOKCOMPLETO_COUPON,
+  LOOKCOMPLETO_DISCOUNT_PERCENT,
+} from "./_lib/tn.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -55,6 +63,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         payment_status: "unpaid",
         sale_channel: "Look Finder Web",
         products: cartItems,
+        discount: String(LOOKCOMPLETO_DISCOUNT_PERCENT),
+        discount_type: "percentage",
+        note: `Cupón ${LOOKCOMPLETO_COUPON} aplicado automáticamente (${LOOKCOMPLETO_DISCOUNT_PERCENT}% off look completo)`,
       };
       const r = await fetch(`${TN_BASE}/draft_orders`, {
         method: "POST",

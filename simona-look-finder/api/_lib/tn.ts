@@ -1,6 +1,13 @@
 // ─── TIENDA NUBE SHARED LOGIC ───────────────────────────────────────────────
 // Used by /api/catalog and /api/cart Vercel Functions.
 
+// Cupón "LOOK COMPLETO": 15% off automático al comprar el look entero desde
+// el Look Finder. Se aplica como discount directo en el draft order (Tienda
+// Nube no soporta aplicar cupones por código vía API), no requiere que la
+// clienta ingrese nada en el checkout.
+export const LOOKCOMPLETO_COUPON = "LOOKCOMPLETO";
+export const LOOKCOMPLETO_DISCOUNT_PERCENT = 15;
+
 export const STORE_ID = process.env.TIENDANUBE_STORE_ID || "601496";
 export const ACCESS_TOKEN = process.env.TIENDANUBE_ACCESS_TOKEN || "";
 export const TN_BASE = `https://api.tiendanube.com/v1/${STORE_ID}`;
