@@ -126,6 +126,24 @@ const STATIC_PRODUCTS: Record<string, { name: string; price: string; img: string
   "texana-saison-t6iwy": { name: "Texana Saison", price: "$218.500", img: "https://simonashop.com.ar/archivos/productos/texana-saison-1.webp", url: "https://www.simonashop.com.ar/productos/texana-saison-t6iwy/" },
 };
 
+// Categoría de cada prenda — determina qué talle se usa al armar el carrito.
+const PRODUCT_CATEGORIES: Record<string, "arriba" | "abajo"> = {
+  "campera-anada-bordo-k84tk": "arriba",
+  "jean-vigor-1nmtv": "abajo",
+  "remera-basica-escote-redondo-leon-negro": "arriba",
+  "remera-teddy-petroleo-1xnfr": "arriba",
+  "pantalon-terra-chocolate-1w1na": "abajo",
+  "campera-nero-verde-38emi": "arriba",
+  "camisa-lidia": "arriba",
+  "jean-mom-negro-gastado1": "abajo",
+  "zueco-pantu-negro": "abajo",
+  "blazer-bouquet-negro-142qu": "arriba",
+  "pantalon-algarrobo-tvt0h": "abajo",
+  "blazer-mendoza-chocolate-liso-1j10l": "arriba",
+  "chaleco-tejido-gris-1ssdp": "arriba",
+  "texana-saison-t6iwy": "abajo",
+};
+
 // ─── TN API TYPES ────────────────────────────────────────────────────────────
 
 type TNVariant = {
@@ -349,13 +367,18 @@ async function startServer() {
   });
 
   // ── POST /api/cart ────────────────────────────────────────────────────────
-  // Body: { lookKey: string, talle: string, couponToken?: string }
+  // Body: { lookKey: string, talleArriba: string, talleAbajo: string, couponToken?: string }
   // Returns: { checkout_url: string, draft_order_id: number, couponApplied: boolean }
   app.post("/api/cart", async (req, res) => {
-    const { lookKey, talle, couponToken } = req.body as { lookKey?: string; talle?: string; couponToken?: string };
+    const { lookKey, talleArriba, talleAbajo, couponToken } = req.body as {
+      lookKey?: string;
+      talleArriba?: string;
+      talleAbajo?: string;
+      couponToken?: string;
+    };
 
-    if (!lookKey || !talle) {
-      res.status(400).json({ error: "lookKey y talle son requeridos" });
+    if (!lookKey || !talleArriba || !talleAbajo) {
+      res.status(400).json({ error: "lookKey, talleArriba y talleAbajo son requeridos" });
       return;
     }
 
@@ -372,7 +395,8 @@ async function startServer() {
 
     try {
       const products = await getProductsByHandle();
-      const talleKey = talle.toUpperCase();
+      const talleArribaKey = talleArriba.toUpperCase();
+      const talleAbajoKey = talleAbajo.toUpperCase();
 
       // Mapa variant_id → nombre de producto (para errores descriptivos)
       const variantToName = new Map<number, string>();
@@ -380,6 +404,8 @@ async function startServer() {
       for (const handle of def.handles) {
         const p = products.get(handle);
         if (!p) continue;
+        const category = PRODUCT_CATEGORIES[handle] ?? "arriba";
+        const talleKey = category === "abajo" ? talleAbajoKey : talleArribaKey;
         const variantId = p.variantsByTalle[talleKey] ?? p.defaultVariantId;
         if (variantId) {
           items.push({ variant_id: variantId, quantity: 1 });
@@ -436,14 +462,14 @@ async function startServer() {
               checkout_url: retry.data.checkout_url,
               draft_order_id: retry.data.id,
               couponApplied: couponValid,
-              warning: `Sin stock en talle ${talle}: ${oosNames.join(", ")}. Se agregaron las prendas disponibles.`,
+              warning: `Sin stock de algunas prendas: ${oosNames.join(", ")}. Se agregaron las disponibles.`,
             });
             return;
           }
         }
 
         res.status(422).json({
-          error: `Sin stock en talle ${talle}: ${oosNames.join(", ")}. Probá con otro talle.`,
+          error: `Sin stock: ${oosNames.join(", ")}. Probá con otro talle.`,
           detail: data,
         });
         return;

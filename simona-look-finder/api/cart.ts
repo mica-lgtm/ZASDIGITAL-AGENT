@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import {
   getProductsByHandle,
   LOOK_DEFS,
+  PRODUCT_CATEGORIES,
   ACCESS_TOKEN,
   TN_BASE,
   TN_HEADERS,
@@ -16,14 +17,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const { lookKey, talle, couponToken } = (req.body || {}) as {
+  const { lookKey, talleArriba, talleAbajo, couponToken } = (req.body || {}) as {
     lookKey?: string;
-    talle?: string;
+    talleArriba?: string;
+    talleAbajo?: string;
     couponToken?: string;
   };
 
-  if (!lookKey || !talle) {
-    res.status(400).json({ error: "lookKey y talle son requeridos" });
+  if (!lookKey || !talleArriba || !talleAbajo) {
+    res.status(400).json({ error: "lookKey, talleArriba y talleAbajo son requeridos" });
     return;
   }
 
@@ -40,7 +42,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const products = await getProductsByHandle();
-    const talleKey = talle.toUpperCase();
+    const talleArribaKey = talleArriba.toUpperCase();
+    const talleAbajoKey = talleAbajo.toUpperCase();
 
     const variantToName = new Map<number, string>();
     const items: { variant_id: number; quantity: number }[] = [];
@@ -48,6 +51,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     for (const handle of def.handles) {
       const p = products.get(handle);
       if (!p) continue;
+      const category = PRODUCT_CATEGORIES[handle] ?? "arriba";
+      const talleKey = category === "abajo" ? talleAbajoKey : talleArribaKey;
       const variantId = p.variantsByTalle[talleKey] ?? p.defaultVariantId;
       if (variantId) {
         items.push({ variant_id: variantId, quantity: 1 });
@@ -103,14 +108,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             checkout_url: retry.data.checkout_url,
             draft_order_id: retry.data.id,
             couponApplied: couponValid,
-            warning: `Sin stock en talle ${talle}: ${oosNames.join(", ")}. Se agregaron las prendas disponibles.`,
+            warning: `Sin stock de algunas prendas: ${oosNames.join(", ")}. Se agregaron las disponibles.`,
           });
           return;
         }
       }
 
       res.status(422).json({
-        error: `Sin stock en talle ${talle}: ${oosNames.join(", ")}. Probá con otro talle.`,
+        error: `Sin stock: ${oosNames.join(", ")}. Probá con otro talle.`,
         detail: data,
       });
       return;

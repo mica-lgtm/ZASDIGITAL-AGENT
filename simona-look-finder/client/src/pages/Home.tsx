@@ -100,14 +100,15 @@ function storeCoupon(info: CouponInfo) {
 function getUrlParams() {
   const params = new URLSearchParams(window.location.search);
   const look = params.get("look") || "";
-  const talle = params.get("talle") || "";
-  if (look && talle) {
+  const talleA = params.get("talleA") || params.get("talle") || "";
+  const talleB = params.get("talleB") || params.get("talle") || "";
+  if (look && talleA && talleB) {
     const parts = look.split("-");
     const occasion = parts[0] || "";
     const style = parts.slice(1).join("-");
-    return { occasion, style, talle, lookKey: look, fromUrl: true };
+    return { occasion, style, talleArriba: talleA, talleAbajo: talleB, lookKey: look, fromUrl: true };
   }
-  return { occasion: "", style: "", talle: "", lookKey: "", fromUrl: false };
+  return { occasion: "", style: "", talleArriba: "", talleAbajo: "", lookKey: "", fromUrl: false };
 }
 
 // ─── CATALOG HOOK ────────────────────────────────────────────────────────────
@@ -422,7 +423,7 @@ function SwipeCards({
 // ─── PROGRESS BAR ────────────────────────────────────────────────────────────
 
 function ProgressBar({ step }: { step: number }) {
-  const pct = Math.min(((step - 1) / 3) * 100, 100);
+  const pct = Math.min(((step - 1) / 4) * 100, 100);
   return (
     <div className="w-full h-px bg-white/10">
       <motion.div
@@ -464,12 +465,12 @@ function CouponBadge({ remainingMs }: { remainingMs: number | null }) {
 
 // ─── SHARE BUTTON ────────────────────────────────────────────────────────────
 
-function ShareButton({ lookKey, talle }: { lookKey: string; talle: string }) {
+function ShareButton({ lookKey, talleArriba, talleAbajo }: { lookKey: string; talleArriba: string; talleAbajo: string }) {
   const [copied, setCopied] = useState(false);
 
   const handleShare = () => {
     const url = new URL(window.location.href);
-    url.search = `?look=${lookKey}&talle=${talle}`;
+    url.search = `?look=${lookKey}&talleA=${talleArriba}&talleB=${talleAbajo}`;
     url.hash = "";
     navigator.clipboard.writeText(url.toString()).then(() => {
       setCopied(true);
@@ -502,10 +503,11 @@ function ShareButton({ lookKey, talle }: { lookKey: string; talle: string }) {
 export default function Home() {
   const urlParams = getUrlParams();
 
-  const [step, setStep] = useState(urlParams.fromUrl ? 4 : 0);
+  const [step, setStep] = useState(urlParams.fromUrl ? 5 : 0);
   const [occasion, setOccasion] = useState(urlParams.occasion);
   const [style, setStyle] = useState(urlParams.style);
-  const [talle, setTalle] = useState(urlParams.talle);
+  const [talleArriba, setTalleArriba] = useState(urlParams.talleArriba);
+  const [talleAbajo, setTalleAbajo] = useState(urlParams.talleAbajo);
   const [cartLoading, setCartLoading] = useState(false);
   const [cartRedirecting, setCartRedirecting] = useState(false);
   const [cartError, setCartError] = useState("");
@@ -524,22 +526,24 @@ export default function Home() {
   const socialCount = LOOK_SOCIAL_COUNTS[lookKey] ?? 34;
 
   useEffect(() => {
-    if (step === 4 && lookKey && talle) {
+    if (step === 5 && lookKey && talleArriba && talleAbajo) {
       const url = new URL(window.location.href);
-      url.search = `?look=${lookKey}&talle=${talle}`;
+      url.search = `?look=${lookKey}&talleA=${talleArriba}&talleB=${talleAbajo}`;
       window.history.replaceState({}, "", url.toString());
     }
-  }, [step, lookKey, talle]);
+  }, [step, lookKey, talleArriba, talleAbajo]);
 
   const handleOccasion = (id: string) => { setOccasion(id); setTimeout(() => setStep(2), 250); };
   const handleStyle = (id: string) => { setStyle(id); setTimeout(() => setStep(3), 250); };
-  const handleTalle = (t: string) => { setTalle(t); setTimeout(() => setStep(4), 250); };
+  const handleTalleArriba = (t: string) => { setTalleArriba(t); setTimeout(() => setStep(4), 250); };
+  const handleTalleAbajo = (t: string) => { setTalleAbajo(t); setTimeout(() => setStep(5), 250); };
 
   const reset = () => {
     setStep(0);
     setOccasion("");
     setStyle("");
-    setTalle("");
+    setTalleArriba("");
+    setTalleAbajo("");
     setCartError("");
     setCartWarning("");
     setCartLoading(false);
@@ -548,7 +552,7 @@ export default function Home() {
   };
 
   const handleBuyLook = async () => {
-    if (!lookKey || !talle || cartLoading || cartRedirecting) return;
+    if (!lookKey || !talleArriba || !talleAbajo || cartLoading || cartRedirecting) return;
     setCartLoading(true);
     setCartError("");
     setCartWarning("");
@@ -557,7 +561,7 @@ export default function Home() {
       const res = await fetch("/api/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lookKey, talle, couponToken: coupon?.token }),
+        body: JSON.stringify({ lookKey, talleArriba, talleAbajo, couponToken: coupon?.token }),
       });
       const data = await res.json();
 
@@ -604,13 +608,13 @@ export default function Home() {
           <span className="font-bold text-white text-[11px] tracking-[3px]">NA</span>
         </a>
 
-        {step > 0 && step < 4 && (
-          <div className="flex items-center gap-1.5">
-            {["Ocasión", "Estilo", "Talle"].map((label, i) => (
-              <div key={i} className="flex items-center gap-1.5">
+        {step > 0 && step < 5 && (
+          <div className="flex items-center gap-1">
+            {["Ocasión", "Estilo", "Arriba", "Abajo"].map((label, i) => (
+              <div key={i} className="flex items-center gap-1">
                 <div className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${i < step - 1 ? "bg-[#8B6347]" : i === step - 1 ? "bg-[#C4A882] scale-125" : "bg-white/20"}`} />
-                <span className={`text-[9px] font-['Inter',sans-serif] font-medium tracking-widest uppercase transition-colors ${i === step - 1 ? "text-[#C4A882]" : "text-white/25"}`}>{label}</span>
-                {i < 2 && <div className="w-4 h-px bg-white/10" />}
+                <span className={`text-[8px] font-['Inter',sans-serif] font-medium tracking-wider uppercase transition-colors ${i === step - 1 ? "text-[#C4A882]" : "text-white/25"}`}>{label}</span>
+                {i < 3 && <div className="w-3 h-px bg-white/10" />}
               </div>
             ))}
           </div>
@@ -627,7 +631,7 @@ export default function Home() {
       </header>
 
       {/* PROGRESS */}
-      {step > 0 && step < 4 && (
+      {step > 0 && step < 5 && (
         <div className="relative z-10 px-6 mt-4">
           <ProgressBar step={step} />
         </div>
@@ -646,7 +650,7 @@ export default function Home() {
                 <em className="italic text-[#C4A882]">look perfecto</em>
               </h1>
               <p className="text-sm font-['Inter',sans-serif] font-light text-white/45 mb-4 leading-relaxed">
-                3 preguntas. Un outfit completo.<br />Productos reales de la colección.
+                4 preguntas. Un outfit completo.<br />Productos reales de la colección.
               </p>
 
               {/* Social proof */}
@@ -693,21 +697,22 @@ export default function Home() {
             </motion.div>
           )}
 
-          {/* TALLE */}
+          {/* TALLE ARRIBA */}
           {step === 3 && (
-            <motion.div key="talle" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-sm mx-auto">
+            <motion.div key="talle-arriba" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-sm mx-auto">
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-white">¿Cuál es tu talle?</h2>
-                <p className="text-xs font-['Inter',sans-serif] font-light text-white/35 mt-1.5">Para mostrarte las prendas disponibles</p>
+                <p className="text-[10px] font-['Inter',sans-serif] font-semibold tracking-[3px] uppercase text-[#8B6347] mb-2">Parte de arriba</p>
+                <h2 className="text-2xl font-bold text-white">¿Cuál es tu talle de arriba?</h2>
+                <p className="text-xs font-['Inter',sans-serif] font-light text-white/35 mt-1.5">Camperas, blazers, remeras y camisas</p>
                 <SizeGuide />
               </div>
               <div className="flex gap-3 justify-center flex-wrap">
                 {TALLES.map((t) => (
                   <button
                     key={t}
-                    onClick={() => handleTalle(t)}
+                    onClick={() => handleTalleArriba(t)}
                     className={`w-16 h-16 text-lg font-bold border transition-all duration-200 active:scale-[0.93] ${
-                      talle === t ? "border-[#C4A882] bg-[#8B6347] text-white" : "border-white/20 text-white/55 hover:border-white/50 hover:text-white"
+                      talleArriba === t ? "border-[#C4A882] bg-[#8B6347] text-white" : "border-white/20 text-white/55 hover:border-white/50 hover:text-white"
                     }`}
                   >
                     {t}
@@ -720,8 +725,36 @@ export default function Home() {
             </motion.div>
           )}
 
-          {/* RESULTADO */}
+          {/* TALLE ABAJO */}
           {step === 4 && (
+            <motion.div key="talle-abajo" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-sm mx-auto">
+              <div className="text-center mb-6">
+                <p className="text-[10px] font-['Inter',sans-serif] font-semibold tracking-[3px] uppercase text-[#8B6347] mb-2">Parte de abajo</p>
+                <h2 className="text-2xl font-bold text-white">¿Cuál es tu talle de abajo?</h2>
+                <p className="text-xs font-['Inter',sans-serif] font-light text-white/35 mt-1.5">Pantalones, jeans y calzado</p>
+                <SizeGuide />
+              </div>
+              <div className="flex gap-3 justify-center flex-wrap">
+                {TALLES.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => handleTalleAbajo(t)}
+                    className={`w-16 h-16 text-lg font-bold border transition-all duration-200 active:scale-[0.93] ${
+                      talleAbajo === t ? "border-[#C4A882] bg-[#8B6347] text-white" : "border-white/20 text-white/55 hover:border-white/50 hover:text-white"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => setStep(3)} className="mt-8 mx-auto block text-[10px] font-['Inter',sans-serif] font-medium tracking-[2px] uppercase text-white/25 hover:text-white/50 transition-colors">
+                ← Volver
+              </button>
+            </motion.div>
+          )}
+
+          {/* RESULTADO */}
+          {step === 5 && (
             <motion.div key="result" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-sm mx-auto">
 
               {!look && catalogError ? (
@@ -746,7 +779,7 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute top-4 left-4">
                       <span className="text-[9px] font-['Inter',sans-serif] font-semibold tracking-[3px] uppercase text-[#C4A882] bg-black/40 px-2 py-1">
-                        {OCCASIONS.find(o => o.id === resolvedOccasion)?.label} · Talle {talle}
+                        {OCCASIONS.find(o => o.id === resolvedOccasion)?.label} · {talleArriba}/{talleAbajo}
                       </span>
                     </div>
                     {couponActive && (
@@ -888,7 +921,7 @@ export default function Home() {
                       Ver colección completa
                     </a>
 
-                    {lookKey && talle && <ShareButton lookKey={lookKey} talle={talle} />}
+                    {lookKey && talleArriba && talleAbajo && <ShareButton lookKey={lookKey} talleArriba={talleArriba} talleAbajo={talleAbajo} />}
 
                     <button
                       onClick={reset}

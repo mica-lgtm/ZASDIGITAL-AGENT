@@ -55,6 +55,26 @@ export function isCouponTokenValid(token: unknown): boolean {
 
 export type LookDef = { name: string; heroImg: string; handles: string[] };
 
+// Categoría de cada prenda: determina qué talle se usa al armar el carrito.
+// "arriba" → talleArriba (camperas, blazers, remeras, camisas, chalecos)
+// "abajo"  → talleAbajo  (pantalones, jeans, calzado)
+export const PRODUCT_CATEGORIES: Record<string, "arriba" | "abajo"> = {
+  "campera-anada-bordo-k84tk": "arriba",
+  "jean-vigor-1nmtv": "abajo",
+  "remera-basica-escote-redondo-leon-negro": "arriba",
+  "remera-teddy-petroleo-1xnfr": "arriba",
+  "pantalon-terra-chocolate-1w1na": "abajo",
+  "campera-nero-verde-38emi": "arriba",
+  "camisa-lidia": "arriba",
+  "jean-mom-negro-gastado1": "abajo",
+  "zueco-pantu-negro": "abajo",
+  "blazer-bouquet-negro-142qu": "arriba",
+  "pantalon-algarrobo-tvt0h": "abajo",
+  "blazer-mendoza-chocolate-liso-1j10l": "arriba",
+  "chaleco-tejido-gris-1ssdp": "arriba",
+  "texana-saison-t6iwy": "abajo",
+};
+
 export const LOOK_DEFS: Record<string, LookDef> = {
   "casual-clasico": {
     name: "Look Añada",
