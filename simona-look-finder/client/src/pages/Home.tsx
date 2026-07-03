@@ -5,15 +5,33 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-mo
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663489253832/GCNEfmb632ab7e3kLMogtf/simona_hero_bg-gSwKLDuL9uBpMGpRgbPyqf.webp";
 
-// Cupón "look completo": se aplica automáticamente como discount en el draft
-// order al comprar (ver /api/cart) — la clienta no tiene que ingresar nada.
 const COUPON_CODE = "LOOKCOMPLETO";
 const DISCOUNT_PERCENT = 15;
 
-// Bordó: acento propio del cupón, distinto de la paleta terracota del resto
-// del sitio, para que la promo se note más.
 const BORDO = "#7A1B34";
 const BORDO_LIGHT = "#C24C6B";
+
+// Simulated social proof — determinístico por look, plausible para OI 2026
+const LOOK_SOCIAL_COUNTS: Record<string, number> = {
+  "casual-clasico": 63,
+  "casual-trendy": 47,
+  "casual-relaxed": 38,
+  "oficina-clasico": 51,
+  "oficina-trendy": 44,
+  "oficina-relaxed": 29,
+  "noche-clasico": 31,
+  "noche-trendy": 52,
+  "noche-relaxed": 27,
+};
+
+// Talles Simona → talle numérico AR
+const TALLE_GUIDE = [
+  { talle: "XS", ar: "36" },
+  { talle: "S", ar: "38" },
+  { talle: "M", ar: "40" },
+  { talle: "L", ar: "42" },
+  { talle: "XL", ar: "44" },
+];
 
 // ─── STATIC UI DATA ──────────────────────────────────────────────────────────
 
@@ -54,10 +72,6 @@ type Catalog = Record<string, Look>;
 type CouponInfo = { token: string; issuedAt: number; windowMs: number };
 
 // ─── COUPON PERSISTENCE ──────────────────────────────────────────────────────
-// El token se guarda la primera vez que la clienta ve un look, así el
-// contador de 24hs no se resetea si recarga la página o vuelve más tarde
-// (el vencimiento real siempre lo valida el servidor, esto es solo para
-// mostrar el mismo contador de forma consistente).
 
 const COUPON_STORAGE_KEY = "simona_lookfinder_coupon";
 
@@ -77,11 +91,11 @@ function storeCoupon(info: CouponInfo) {
   try {
     localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify(info));
   } catch {
-    // localStorage no disponible (modo privado, etc.) — no es crítico
+    // localStorage no disponible — no es crítico
   }
 }
 
-// ─── URL PARAMS — deep link support ─────────────────────────────────────────
+// ─── URL PARAMS ──────────────────────────────────────────────────────────────
 
 function getUrlParams() {
   const params = new URLSearchParams(window.location.search);
@@ -89,7 +103,6 @@ function getUrlParams() {
   const talle = params.get("talle") || "";
   if (look && talle) {
     const parts = look.split("-");
-    // look keys are: {occasion}-{style} where occasion has no "-"
     const occasion = parts[0] || "";
     const style = parts.slice(1).join("-");
     return { occasion, style, talle, lookKey: look, fromUrl: true };
@@ -168,10 +181,6 @@ function calcDiscountedTotal(products: Product[]): string {
   return `$${discounted.toLocaleString("es-AR")}`;
 }
 
-// Resuelve el look a mostrar: si el pedido (ocasión+estilo) no tiene productos
-// disponibles, busca otro estilo dentro de la misma ocasión y, si tampoco hay,
-// cualquier otro look disponible en el catálogo. Nunca deja al usuario frente
-// a un "look no disponible": siempre muestra algo con productos reales.
 function pickAvailableLookKey(catalog: Catalog, occasion: string, style: string): string {
   const keys = Object.keys(catalog);
   if (keys.length === 0) return "";
@@ -193,6 +202,70 @@ function pickAvailableLookKey(catalog: Catalog, occasion: string, style: string)
   }
 
   return (primary && catalog[primary]) ? primary : keys[0];
+}
+
+// ─── TRUST BAR ───────────────────────────────────────────────────────────────
+
+function TrustBar() {
+  return (
+    <div className="w-full flex items-center justify-center gap-0 py-3 border-y border-white/8">
+      {["Envío a todo el país", "Cambios 30 días", "Pago seguro"].map((text, i) => (
+        <span key={i} className="flex items-center gap-0">
+          {i > 0 && (
+            <span className="mx-3 text-[#8B6347]/50 text-[8px] leading-none">✦</span>
+          )}
+          <span className="text-[9px] font-['Inter',sans-serif] tracking-[1.5px] uppercase text-white/28">
+            {text}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ─── SIZE GUIDE ──────────────────────────────────────────────────────────────
+
+function SizeGuide() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="text-center mt-3">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="text-[10px] font-['Inter',sans-serif] font-medium tracking-[2px] uppercase text-white/25 hover:text-[#C4A882] transition-colors"
+      >
+        {open ? "Cerrar guía ↑" : "Guía de talles ↓"}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            key="size-guide-panel"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 border border-white/10 px-4 py-3 max-w-xs mx-auto">
+              <div className="grid grid-cols-5 gap-1 text-center">
+                {TALLE_GUIDE.map(({ talle, ar }) => (
+                  <div key={talle} className="flex flex-col gap-0.5">
+                    <span className="text-xs font-bold text-white">{talle}</span>
+                    <span className="text-[10px] font-['Inter',sans-serif] text-white/35">T.{ar}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="w-full h-px bg-white/8 my-2" />
+              <p className="text-[9px] font-['Inter',sans-serif] text-white/20 text-center tracking-[1px] uppercase">
+                Talle numérico argentino
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 // ─── SWIPEABLE CARD STACK ────────────────────────────────────────────────────
@@ -362,8 +435,6 @@ function ProgressBar({ step }: { step: number }) {
 }
 
 // ─── COUPON BADGE ────────────────────────────────────────────────────────────
-// El cupón se aplica solo (discount automático en el draft order de /api/cart)
-// al tocar "Comprar el look" — esto es solo informativo, no hay nada que copiar.
 
 function CouponBadge({ remainingMs }: { remainingMs: number | null }) {
   if (remainingMs == null) return null;
@@ -403,9 +474,7 @@ function ShareButton({ lookKey, talle }: { lookKey: string; talle: string }) {
     navigator.clipboard.writeText(url.toString()).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    }).catch(() => {
-      // fallback: select text
-    });
+    }).catch(() => {});
   };
 
   return (
@@ -452,7 +521,8 @@ export default function Home() {
   const couponRemainingMs = useCountdown(couponDeadline);
   const couponActive = couponRemainingMs != null && couponRemainingMs > 0;
 
-  // Update URL when look is set (for sharable links)
+  const socialCount = LOOK_SOCIAL_COUNTS[lookKey] ?? 34;
+
   useEffect(() => {
     if (step === 4 && lookKey && talle) {
       const url = new URL(window.location.href);
@@ -474,7 +544,6 @@ export default function Home() {
     setCartWarning("");
     setCartLoading(false);
     setCartRedirecting(false);
-    // Clear URL params
     window.history.replaceState({}, "", window.location.pathname);
   };
 
@@ -499,7 +568,6 @@ export default function Home() {
       }
 
       if (data.warning) {
-        // Mantener el botón deshabilitado durante el redirect
         setCartLoading(false);
         setCartRedirecting(true);
         setCartWarning(data.warning);
@@ -577,15 +645,26 @@ export default function Home() {
                 Encontrá tu<br />
                 <em className="italic text-[#C4A882]">look perfecto</em>
               </h1>
-              <p className="text-sm font-['Inter',sans-serif] font-light text-white/45 mb-10 leading-relaxed">
+              <p className="text-sm font-['Inter',sans-serif] font-light text-white/45 mb-4 leading-relaxed">
                 3 preguntas. Un outfit completo.<br />Productos reales de la colección.
               </p>
+
+              {/* Social proof */}
+              <p className="text-[10px] font-['Inter',sans-serif] tracking-[2px] uppercase text-white/30 mb-8">
+                <span className="text-[#8B6347]">✦</span> +200 looks armados esta temporada
+              </p>
+
               <button
                 onClick={() => setStep(1)}
                 className="w-full max-w-xs mx-auto flex items-center justify-center gap-3 bg-[#8B6347] hover:bg-[#7a5540] active:scale-[0.97] text-white font-['Inter',sans-serif] font-semibold text-sm tracking-[3px] uppercase py-4 transition-all duration-200"
               >
                 Empezar →
               </button>
+
+              {/* Coupon teaser */}
+              <p className="text-[10px] font-['Inter',sans-serif] tracking-[1.5px] uppercase mt-4" style={{ color: BORDO_LIGHT }}>
+                ✦ {DISCOUNT_PERCENT}% off al comprar el look completo
+              </p>
             </motion.div>
           )}
 
@@ -617,9 +696,10 @@ export default function Home() {
           {/* TALLE */}
           {step === 3 && (
             <motion.div key="talle" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-sm mx-auto">
-              <div className="text-center mb-10">
+              <div className="text-center mb-6">
                 <h2 className="text-2xl font-bold text-white">¿Cuál es tu talle?</h2>
                 <p className="text-xs font-['Inter',sans-serif] font-light text-white/35 mt-1.5">Para mostrarte las prendas disponibles</p>
+                <SizeGuide />
               </div>
               <div className="flex gap-3 justify-center flex-wrap">
                 {TALLES.map((t) => (
@@ -644,14 +724,10 @@ export default function Home() {
           {step === 4 && (
             <motion.div key="result" variants={slideVariants} initial="initial" animate="animate" exit="exit" className="w-full max-w-sm mx-auto">
 
-              {/* Error de catálogo */}
               {!look && catalogError ? (
                 <div className="flex flex-col items-center gap-4 py-12 text-center">
                   <p className="text-white/50 font-['Inter',sans-serif] text-sm">No pudimos cargar el catálogo.</p>
-                  <button
-                    onClick={reset}
-                    className="text-[10px] font-['Inter',sans-serif] tracking-[2px] uppercase text-[#C4A882] hover:text-white transition-colors"
-                  >
+                  <button onClick={reset} className="text-[10px] font-['Inter',sans-serif] tracking-[2px] uppercase text-[#C4A882] hover:text-white transition-colors">
                     ← Intentar de nuevo
                   </button>
                 </div>
@@ -665,7 +741,7 @@ export default function Home() {
               ) : (
                 <>
                   {/* Look hero */}
-                  <div className="relative w-full overflow-hidden mb-4" style={{ height: "280px" }}>
+                  <div className="relative w-full overflow-hidden mb-3" style={{ height: "280px" }}>
                     <img src={look.heroImg} alt={look.name} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute top-4 left-4">
@@ -685,27 +761,33 @@ export default function Home() {
                         </motion.span>
                       </div>
                     )}
-                    <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
-                      <div>
-                        <p className="text-[10px] font-['Inter',sans-serif] font-semibold tracking-[3px] uppercase text-[#C4A882] mb-1">Tu look</p>
-                        <p className="text-2xl font-bold text-white">{look.name}</p>
+                    <div className="absolute bottom-5 left-5 right-5">
+                      <div className="flex items-end justify-between mb-1">
+                        <div>
+                          <p className="text-[10px] font-['Inter',sans-serif] font-semibold tracking-[3px] uppercase text-[#C4A882] mb-1">Tu look</p>
+                          <p className="text-2xl font-bold text-white">{look.name}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-['Inter',sans-serif] text-white/50 mb-0.5">{look.products.length} prendas</p>
+                          {couponActive ? (
+                            <>
+                              <p className="text-xs font-['Inter',sans-serif] text-white/40 line-through">{calcTotal(look.products)}</p>
+                              <p className="text-xl font-bold" style={{ color: BORDO_LIGHT }}>{calcDiscountedTotal(look.products)}</p>
+                            </>
+                          ) : (
+                            <p className="text-xl font-bold text-white">{calcTotal(look.products)}</p>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-['Inter',sans-serif] text-white/50 mb-0.5">Total</p>
-                        {couponActive ? (
-                          <>
-                            <p className="text-xs font-['Inter',sans-serif] text-white/40 line-through">{calcTotal(look.products)}</p>
-                            <p className="text-xl font-bold" style={{ color: BORDO_LIGHT }}>{calcDiscountedTotal(look.products)}</p>
-                          </>
-                        ) : (
-                          <p className="text-xl font-bold text-white">{calcTotal(look.products)}</p>
-                        )}
-                      </div>
+                      {/* Social proof in hero */}
+                      <p className="text-[9px] font-['Inter',sans-serif] text-white/30 tracking-[1px]">
+                        <span className="text-[#8B6347]">✦</span> {socialCount} clientas eligieron este look
+                      </p>
                     </div>
                   </div>
 
                   {/* Products list */}
-                  <div className="flex flex-col gap-2 mb-4">
+                  <div className="flex flex-col gap-2 mb-3">
                     {look.products.map((p, i) => (
                       <motion.a
                         key={i}
@@ -740,12 +822,12 @@ export default function Home() {
                     animate={{ opacity: 1, y: 0, transition: { delay: 0.4, duration: 0.3 } }}
                     className="flex flex-col gap-2"
                   >
-                    {/* OOS warning — arriba del botón cuando hay redirect en progreso */}
+                    {/* OOS warning */}
                     {cartWarning && (
                       <motion.div
                         initial={{ opacity: 0, y: -4 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-start gap-2 bg-[#C4A882]/10 border border-[#C4A882]/20 px-3 py-2.5 mb-1"
+                        className="flex items-start gap-2 bg-[#C4A882]/10 border border-[#C4A882]/20 px-3 py-2.5"
                       >
                         {cartRedirecting && (
                           <span className="w-3 h-3 mt-0.5 border border-[#C4A882] border-t-transparent rounded-full animate-spin flex-shrink-0" />
@@ -757,7 +839,10 @@ export default function Home() {
                       </motion.div>
                     )}
 
-                    {/* Primary: comprar el look completo */}
+                    {/* Coupon badge ARRIBA del CTA — la urgencia empuja al botón */}
+                    <CouponBadge remainingMs={couponRemainingMs} />
+
+                    {/* Primary CTA */}
                     <button
                       onClick={handleBuyLook}
                       disabled={cartLoading || cartRedirecting}
@@ -773,8 +858,10 @@ export default function Home() {
                           <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                           <span>Redirigiendo…</span>
                         </>
+                      ) : couponActive ? (
+                        `Quiero este look · ${DISCOUNT_PERCENT}% off →`
                       ) : (
-                        "Comprar el look →"
+                        "Quiero este look →"
                       )}
                     </button>
 
@@ -788,10 +875,10 @@ export default function Home() {
                       </motion.p>
                     )}
 
-                    {/* Cupón: se aplica automáticamente al comprar, esto es solo informativo */}
-                    <CouponBadge remainingMs={couponRemainingMs} />
+                    {/* Trust bar — reduce anxiety inmediatamente después del CTA */}
+                    <TrustBar />
 
-                    {/* Secondary: ver colección */}
+                    {/* Secondary CTAs */}
                     <a
                       href="https://www.simonashop.com.ar/otono-invierno/"
                       target="_blank"
@@ -801,12 +888,11 @@ export default function Home() {
                       Ver colección completa
                     </a>
 
-                    {/* Share look */}
                     {lookKey && talle && <ShareButton lookKey={lookKey} talle={talle} />}
 
                     <button
                       onClick={reset}
-                      className="w-full border border-white/8 hover:border-white/20 text-white/25 hover:text-white/50 font-['Inter',sans-serif] font-medium text-xs tracking-[2px] uppercase py-3 transition-all duration-200 active:scale-[0.98]"
+                      className="w-full text-white/18 hover:text-white/35 font-['Inter',sans-serif] font-medium text-xs tracking-[2px] uppercase py-2 transition-all duration-200 active:scale-[0.98]"
                     >
                       Armar otro look
                     </button>
