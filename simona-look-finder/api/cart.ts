@@ -7,6 +7,7 @@ import {
   TN_HEADERS,
   LOOKCOMPLETO_COUPON,
   LOOKCOMPLETO_DISCOUNT_PERCENT,
+  isCouponTokenValid,
 } from "./_lib/tn.js";
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -15,7 +16,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const { lookKey, talle } = (req.body || {}) as { lookKey?: string; talle?: string };
+  const { lookKey, talle, couponToken } = (req.body || {}) as {
+    lookKey?: string;
+    talle?: string;
+    couponToken?: string;
+  };
 
   if (!lookKey || !talle) {
     res.status(400).json({ error: "lookKey y talle son requeridos" });
@@ -55,6 +60,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
+    // El descuento solo se aplica si el token de cupón (firmado server-side en
+    // /api/catalog) sigue vigente dentro de la ventana de 24hs — no se confía
+    // en ningún timestamp que mande el cliente sin firmar.
+    const couponValid = isCouponTokenValid(couponToken);
+
     const createDraftOrder = async (cartItems: { variant_id: number; quantity: number }[]) => {
       const payload = {
         contact_name: "Visitante",
@@ -63,9 +73,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         payment_status: "unpaid",
         sale_channel: "Look Finder Web",
         products: cartItems,
-        discount: String(LOOKCOMPLETO_DISCOUNT_PERCENT),
-        discount_type: "percentage",
-        note: `Cupón ${LOOKCOMPLETO_COUPON} aplicado automáticamente (${LOOKCOMPLETO_DISCOUNT_PERCENT}% off look completo)`,
+        ...(couponValid
+          ? {
+              discount: String(LOOKCOMPLETO_DISCOUNT_PERCENT),
+              discount_type: "percentage",
+              note: `Cupón ${LOOKCOMPLETO_COUPON} aplicado automáticamente (${LOOKCOMPLETO_DISCOUNT_PERCENT}% off look completo)`,
+            }
+          : {}),
       };
       const r = await fetch(`${TN_BASE}/draft_orders`, {
         method: "POST",
@@ -88,6 +102,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           res.status(200).json({
             checkout_url: retry.data.checkout_url,
             draft_order_id: retry.data.id,
+            couponApplied: couponValid,
             warning: `Sin stock en talle ${talle}: ${oosNames.join(", ")}. Se agregaron las prendas disponibles.`,
           });
           return;
@@ -107,7 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    res.status(200).json({ checkout_url: data.checkout_url, draft_order_id: data.id });
+    res.status(200).json({ checkout_url: data.checkout_url, draft_order_id: data.id, couponApplied: couponValid });
   } catch (err) {
     console.error("/api/cart error:", err);
     res.status(500).json({ error: "Error interno al crear el carrito" });

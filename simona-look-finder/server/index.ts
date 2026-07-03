@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,6 +24,36 @@ const TN_HEADERS = {
 // clienta ingrese nada en el checkout.
 const LOOKCOMPLETO_COUPON = "LOOKCOMPLETO";
 const LOOKCOMPLETO_DISCOUNT_PERCENT = 15;
+const LOOKCOMPLETO_WINDOW_MS = 24 * 60 * 60 * 1000; // 24hs desde que se muestra el look
+
+// Tienda Nube no soporta poner fecha de vencimiento al discount de un draft
+// order via API, así que la ventana de 24hs se controla acá: el cliente recibe
+// un token firmado (HMAC) con la hora en que se generó el look, y /api/cart
+// solo aplica el descuento si ese token es válido y todavía no pasaron 24hs.
+const COUPON_SIGNING_SECRET = process.env.COUPON_SIGNING_SECRET || ACCESS_TOKEN || "simona-lookcompleto-dev-secret";
+
+function signCouponIssuedAt(issuedAt: number): string {
+  return createHmac("sha256", COUPON_SIGNING_SECRET).update(String(issuedAt)).digest("hex");
+}
+
+function mintCouponToken(issuedAt: number = Date.now()): string {
+  return `${issuedAt}.${signCouponIssuedAt(issuedAt)}`;
+}
+
+function isCouponTokenValid(token: unknown): boolean {
+  if (typeof token !== "string") return false;
+  const [issuedAtStr, sig] = token.split(".");
+  const issuedAt = Number(issuedAtStr);
+  if (!issuedAtStr || !sig || !Number.isFinite(issuedAt)) return false;
+
+  const expected = signCouponIssuedAt(issuedAt);
+  const sigBuf = Buffer.from(sig);
+  const expectedBuf = Buffer.from(expected);
+  if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) return false;
+
+  const age = Date.now() - issuedAt;
+  return age >= 0 && age <= LOOKCOMPLETO_WINDOW_MS;
+}
 
 // ─── LOOK DEFINITIONS ───────────────────────────────────────────────────────
 // Handles verificados contra la API de Tienda Nube real.
@@ -298,7 +329,19 @@ async function startServer() {
         };
       }
 
-      res.json({ looks });
+      // Token firmado: el cliente lo guarda la primera vez que ve un look y lo
+      // reenvía en /api/cart durante 24hs para que el 15% off se siga aplicando.
+      const issuedAt = Date.now();
+      res.json({
+        looks,
+        coupon: {
+          code: LOOKCOMPLETO_COUPON,
+          percent: LOOKCOMPLETO_DISCOUNT_PERCENT,
+          windowMs: LOOKCOMPLETO_WINDOW_MS,
+          issuedAt,
+          token: mintCouponToken(issuedAt),
+        },
+      });
     } catch (err) {
       console.error("/api/catalog error:", err);
       res.status(500).json({ error: "Error al cargar el catálogo" });
@@ -306,10 +349,10 @@ async function startServer() {
   });
 
   // ── POST /api/cart ────────────────────────────────────────────────────────
-  // Body: { lookKey: string, talle: string }
-  // Returns: { checkout_url: string, draft_order_id: number }
+  // Body: { lookKey: string, talle: string, couponToken?: string }
+  // Returns: { checkout_url: string, draft_order_id: number, couponApplied: boolean }
   app.post("/api/cart", async (req, res) => {
-    const { lookKey, talle } = req.body as { lookKey?: string; talle?: string };
+    const { lookKey, talle, couponToken } = req.body as { lookKey?: string; talle?: string; couponToken?: string };
 
     if (!lookKey || !talle) {
       res.status(400).json({ error: "lookKey y talle son requeridos" });
@@ -349,6 +392,11 @@ async function startServer() {
         return;
       }
 
+      // El descuento solo se aplica si el token de cupón (firmado server-side en
+      // /api/catalog) sigue vigente dentro de la ventana de 24hs — no se confía
+      // en ningún timestamp que mande el cliente sin firmar.
+      const couponValid = isCouponTokenValid(couponToken);
+
       const createDraftOrder = async (cartItems: { variant_id: number; quantity: number }[]) => {
         const payload = {
           contact_name: "Visitante",
@@ -357,9 +405,13 @@ async function startServer() {
           payment_status: "unpaid",
           sale_channel: "Look Finder Web",
           products: cartItems,
-          discount: String(LOOKCOMPLETO_DISCOUNT_PERCENT),
-          discount_type: "percentage",
-          note: `Cupón ${LOOKCOMPLETO_COUPON} aplicado automáticamente (${LOOKCOMPLETO_DISCOUNT_PERCENT}% off look completo)`,
+          ...(couponValid
+            ? {
+                discount: String(LOOKCOMPLETO_DISCOUNT_PERCENT),
+                discount_type: "percentage",
+                note: `Cupón ${LOOKCOMPLETO_COUPON} aplicado automáticamente (${LOOKCOMPLETO_DISCOUNT_PERCENT}% off look completo)`,
+              }
+            : {}),
         };
         const r = await fetch(`${TN_BASE}/draft_orders`, {
           method: "POST",
@@ -383,6 +435,7 @@ async function startServer() {
             res.json({
               checkout_url: retry.data.checkout_url,
               draft_order_id: retry.data.id,
+              couponApplied: couponValid,
               warning: `Sin stock en talle ${talle}: ${oosNames.join(", ")}. Se agregaron las prendas disponibles.`,
             });
             return;
@@ -402,7 +455,7 @@ async function startServer() {
         return;
       }
 
-      res.json({ checkout_url: data.checkout_url, draft_order_id: data.id });
+      res.json({ checkout_url: data.checkout_url, draft_order_id: data.id, couponApplied: couponValid });
     } catch (err) {
       console.error("/api/cart error:", err);
       res.status(500).json({ error: "Error interno al crear el carrito" });

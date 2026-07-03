@@ -46,6 +46,35 @@ const TALLES = ["XS", "S", "M", "L", "XL"];
 type Product = { name: string; price: string; img: string; url: string };
 type Look = { name: string; heroImg: string; products: Product[] };
 type Catalog = Record<string, Look>;
+type CouponInfo = { token: string; issuedAt: number; windowMs: number };
+
+// ─── COUPON PERSISTENCE ──────────────────────────────────────────────────────
+// El token se guarda la primera vez que la clienta ve un look, así el
+// contador de 24hs no se resetea si recarga la página o vuelve más tarde
+// (el vencimiento real siempre lo valida el servidor, esto es solo para
+// mostrar el mismo contador de forma consistente).
+
+const COUPON_STORAGE_KEY = "simona_lookfinder_coupon";
+
+function loadStoredCoupon(): CouponInfo | null {
+  try {
+    const raw = localStorage.getItem(COUPON_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.token || !parsed?.issuedAt || !parsed?.windowMs) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function storeCoupon(info: CouponInfo) {
+  try {
+    localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify(info));
+  } catch {
+    // localStorage no disponible (modo privado, etc.) — no es crítico
+  }
+}
 
 // ─── URL PARAMS — deep link support ─────────────────────────────────────────
 
@@ -68,6 +97,7 @@ function getUrlParams() {
 function useCatalog() {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [error, setError] = useState(false);
+  const [coupon, setCoupon] = useState<CouponInfo | null>(null);
 
   useEffect(() => {
     fetch("/api/catalog")
@@ -75,11 +105,47 @@ function useCatalog() {
         if (!r.ok) throw new Error("catalog error");
         return r.json();
       })
-      .then((d) => setCatalog(d.looks))
+      .then((d) => {
+        setCatalog(d.looks);
+        if (d.coupon) {
+          const stored = loadStoredCoupon();
+          const storedStillValid = !!stored && Date.now() - stored.issuedAt <= stored.windowMs;
+          if (storedStillValid && stored) {
+            setCoupon(stored);
+          } else {
+            const fresh: CouponInfo = { token: d.coupon.token, issuedAt: d.coupon.issuedAt, windowMs: d.coupon.windowMs };
+            storeCoupon(fresh);
+            setCoupon(fresh);
+          }
+        }
+      })
       .catch(() => setError(true));
   }, []);
 
-  return { catalog, error };
+  return { catalog, error, coupon };
+}
+
+// ─── COUNTDOWN ───────────────────────────────────────────────────────────────
+
+function useCountdown(deadlineMs: number | null): number | null {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (deadlineMs == null) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [deadlineMs]);
+
+  if (deadlineMs == null) return null;
+  return Math.max(0, deadlineMs - now);
+}
+
+function formatCountdown(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -294,12 +360,25 @@ function ProgressBar({ step }: { step: number }) {
 // El cupón se aplica solo (discount automático en el draft order de /api/cart)
 // al tocar "Comprar el look" — esto es solo informativo, no hay nada que copiar.
 
-function CouponBadge() {
+function CouponBadge({ remainingMs }: { remainingMs: number | null }) {
+  if (remainingMs == null) return null;
+  const expired = remainingMs <= 0;
+
   return (
-    <div className="w-full border border-dashed border-[#C4A882]/40 bg-[#C4A882]/5 text-[#C4A882] font-['Inter',sans-serif] text-xs py-3 text-center flex items-center justify-center gap-2">
-      <span>✦</span>
-      <span className="tracking-[2px] uppercase font-semibold">Cupón {COUPON_CODE} aplicado</span>
-      <span className="text-white/40">· {DISCOUNT_PERCENT}% off ya incluido</span>
+    <div
+      className={`w-full border border-dashed font-['Inter',sans-serif] text-xs py-3 text-center flex items-center justify-center gap-2 ${
+        expired ? "border-white/15 bg-white/5 text-white/40" : "border-[#C4A882]/40 bg-[#C4A882]/5 text-[#C4A882]"
+      }`}
+    >
+      {expired ? (
+        <span className="tracking-[2px] uppercase font-semibold">Cupón {COUPON_CODE} vencido</span>
+      ) : (
+        <>
+          <span>✦</span>
+          <span className="tracking-[2px] uppercase font-semibold">Cupón {COUPON_CODE} · {DISCOUNT_PERCENT}% off</span>
+          <span className="text-white/40">vence en {formatCountdown(remainingMs)}</span>
+        </>
+      )}
     </div>
   );
 }
@@ -355,11 +434,15 @@ export default function Home() {
   const [cartError, setCartError] = useState("");
   const [cartWarning, setCartWarning] = useState("");
 
-  const { catalog, error: catalogError } = useCatalog();
+  const { catalog, error: catalogError, coupon } = useCatalog();
 
   const lookKey = catalog ? pickAvailableLookKey(catalog, occasion, style) : "";
   const look = catalog && lookKey ? (catalog[lookKey] ?? null) : null;
   const resolvedOccasion = lookKey ? lookKey.split("-")[0] : occasion;
+
+  const couponDeadline = coupon ? coupon.issuedAt + coupon.windowMs : null;
+  const couponRemainingMs = useCountdown(couponDeadline);
+  const couponActive = couponRemainingMs != null && couponRemainingMs > 0;
 
   // Update URL when look is set (for sharable links)
   useEffect(() => {
@@ -397,7 +480,7 @@ export default function Home() {
       const res = await fetch("/api/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lookKey, talle }),
+        body: JSON.stringify({ lookKey, talle, couponToken: coupon?.token }),
       });
       const data = await res.json();
 
@@ -582,11 +665,13 @@ export default function Home() {
                         {OCCASIONS.find(o => o.id === resolvedOccasion)?.label} · Talle {talle}
                       </span>
                     </div>
-                    <div className="absolute top-4 right-4">
-                      <span className="text-[9px] font-['Inter',sans-serif] font-bold tracking-[2px] uppercase text-white bg-[#8B6347] px-2 py-1">
-                        Look completo 15% off
-                      </span>
-                    </div>
+                    {couponActive && (
+                      <div className="absolute top-4 right-4">
+                        <span className="text-[9px] font-['Inter',sans-serif] font-bold tracking-[2px] uppercase text-white bg-[#8B6347] px-2 py-1">
+                          Look completo {DISCOUNT_PERCENT}% off
+                        </span>
+                      </div>
+                    )}
                     <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
                       <div>
                         <p className="text-[10px] font-['Inter',sans-serif] font-semibold tracking-[3px] uppercase text-[#C4A882] mb-1">Tu look</p>
@@ -594,8 +679,14 @@ export default function Home() {
                       </div>
                       <div className="text-right">
                         <p className="text-[10px] font-['Inter',sans-serif] text-white/50 mb-0.5">Total</p>
-                        <p className="text-xs font-['Inter',sans-serif] text-white/40 line-through">{calcTotal(look.products)}</p>
-                        <p className="text-xl font-bold text-[#C4A882]">{calcDiscountedTotal(look.products)}</p>
+                        {couponActive ? (
+                          <>
+                            <p className="text-xs font-['Inter',sans-serif] text-white/40 line-through">{calcTotal(look.products)}</p>
+                            <p className="text-xl font-bold text-[#C4A882]">{calcDiscountedTotal(look.products)}</p>
+                          </>
+                        ) : (
+                          <p className="text-xl font-bold text-white">{calcTotal(look.products)}</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -685,7 +776,7 @@ export default function Home() {
                     )}
 
                     {/* Cupón: se aplica automáticamente al comprar, esto es solo informativo */}
-                    <CouponBadge />
+                    <CouponBadge remainingMs={couponRemainingMs} />
 
                     {/* Secondary: ver colección */}
                     <a

@@ -1,12 +1,15 @@
 // ─── TIENDA NUBE SHARED LOGIC ───────────────────────────────────────────────
 // Used by /api/catalog and /api/cart Vercel Functions.
 
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 // Cupón "LOOK COMPLETO": 15% off automático al comprar el look entero desde
 // el Look Finder. Se aplica como discount directo en el draft order (Tienda
 // Nube no soporta aplicar cupones por código vía API), no requiere que la
 // clienta ingrese nada en el checkout.
 export const LOOKCOMPLETO_COUPON = "LOOKCOMPLETO";
 export const LOOKCOMPLETO_DISCOUNT_PERCENT = 15;
+export const LOOKCOMPLETO_WINDOW_MS = 24 * 60 * 60 * 1000; // 24hs desde que se muestra el look
 
 export const STORE_ID = process.env.TIENDANUBE_STORE_ID || "601496";
 export const ACCESS_TOKEN = process.env.TIENDANUBE_ACCESS_TOKEN || "";
@@ -16,6 +19,37 @@ export const TN_HEADERS = {
   Authentication: `bearer ${ACCESS_TOKEN}`,
   "User-Agent": "Simona-LookFinder (mica@zasdigital.com)",
 };
+
+// ─── COUPON EXPIRATION TOKEN ─────────────────────────────────────────────────
+// Tienda Nube no soporta poner fecha de vencimiento al discount de un draft
+// order via API, así que la ventana de 24hs se controla acá: el cliente recibe
+// un token firmado (HMAC) con la hora en que se generó el look, y /api/cart
+// solo aplica el descuento si ese token es válido y todavía no pasaron 24hs.
+// Al estar firmado, la clienta no puede falsificar el timestamp desde el navegador.
+const COUPON_SIGNING_SECRET = process.env.COUPON_SIGNING_SECRET || ACCESS_TOKEN || "simona-lookcompleto-dev-secret";
+
+function signCouponIssuedAt(issuedAt: number): string {
+  return createHmac("sha256", COUPON_SIGNING_SECRET).update(String(issuedAt)).digest("hex");
+}
+
+export function mintCouponToken(issuedAt: number = Date.now()): string {
+  return `${issuedAt}.${signCouponIssuedAt(issuedAt)}`;
+}
+
+export function isCouponTokenValid(token: unknown): boolean {
+  if (typeof token !== "string") return false;
+  const [issuedAtStr, sig] = token.split(".");
+  const issuedAt = Number(issuedAtStr);
+  if (!issuedAtStr || !sig || !Number.isFinite(issuedAt)) return false;
+
+  const expected = signCouponIssuedAt(issuedAt);
+  const sigBuf = Buffer.from(sig);
+  const expectedBuf = Buffer.from(expected);
+  if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf)) return false;
+
+  const age = Date.now() - issuedAt;
+  return age >= 0 && age <= LOOKCOMPLETO_WINDOW_MS;
+}
 
 // ─── LOOK DEFINITIONS ────────────────────────────────────────────────────────
 
