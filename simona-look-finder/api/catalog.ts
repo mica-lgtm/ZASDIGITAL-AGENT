@@ -24,9 +24,11 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
         // Solo se muestran productos publicados/visibles en la tienda; los
         // despublicados o no encontrados quedan afuera para no mostrar links rotos.
         products: def.handles
-          .map((handle) => products.get(handle))
-          .filter((p): p is NonNullable<typeof p> => !!p)
-          .map((p) => ({ name: p.name, price: p.price, img: p.img, url: p.url })),
+          .map((handle) => {
+            const p = products.get(handle);
+            return p ? { handle, name: p.name, price: p.price, img: p.img, url: p.url } : null;
+          })
+          .filter((p): p is NonNullable<typeof p> => !!p),
       };
     }
 

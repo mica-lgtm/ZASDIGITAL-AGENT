@@ -24,6 +24,24 @@ const LOOK_SOCIAL_COUNTS: Record<string, number> = {
   "noche-relaxed": 27,
 };
 
+// Mapeo handle → categoría (espejo del backend — para filtrar prendas en los pasos de talle)
+const PRODUCT_CATEGORIES: Record<string, "arriba" | "abajo"> = {
+  "campera-anada-bordo-k84tk": "arriba",
+  "jean-vigor-1nmtv": "abajo",
+  "remera-basica-escote-redondo-leon-negro": "arriba",
+  "remera-teddy-petroleo-1xnfr": "arriba",
+  "pantalon-terra-chocolate-1w1na": "abajo",
+  "campera-nero-verde-38emi": "arriba",
+  "camisa-lidia": "arriba",
+  "jean-mom-negro-gastado1": "abajo",
+  "zueco-pantu-negro": "abajo",
+  "blazer-bouquet-negro-142qu": "arriba",
+  "pantalon-algarrobo-tvt0h": "abajo",
+  "blazer-mendoza-chocolate-liso-1j10l": "arriba",
+  "chaleco-tejido-gris-1ssdp": "arriba",
+  "texana-saison-t6iwy": "abajo",
+};
+
 // Talles Simona → talle numérico AR
 const TALLE_GUIDE = [
   { talle: "XS", ar: "36" },
@@ -66,7 +84,7 @@ const TALLES = ["XS", "S", "M", "L", "XL"];
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-type Product = { name: string; price: string; img: string; url: string };
+type Product = { handle: string; name: string; price: string; img: string; url: string };
 type Look = { name: string; heroImg: string; products: Product[] };
 type Catalog = Record<string, Look>;
 type CouponInfo = { token: string; issuedAt: number; windowMs: number };
@@ -703,7 +721,6 @@ export default function Home() {
               <div className="text-center mb-6">
                 <p className="text-[10px] font-['Inter',sans-serif] font-semibold tracking-[3px] uppercase text-[#8B6347] mb-2">Parte de arriba</p>
                 <h2 className="text-2xl font-bold text-white">¿Cuál es tu talle de arriba?</h2>
-                <p className="text-xs font-['Inter',sans-serif] font-light text-white/35 mt-1.5">Camperas, blazers, remeras y camisas</p>
                 <SizeGuide />
               </div>
               <div className="flex gap-3 justify-center flex-wrap">
@@ -719,7 +736,25 @@ export default function Home() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setStep(2)} className="mt-8 mx-auto block text-[10px] font-['Inter',sans-serif] font-medium tracking-[2px] uppercase text-white/25 hover:text-white/50 transition-colors">
+              {/* Prendas de arriba del look — contexto para la clienta */}
+              {look && (() => {
+                const arribaProds = look.products.filter(p => (PRODUCT_CATEGORIES[p.handle] ?? "arriba") === "arriba");
+                if (!arribaProds.length) return null;
+                return (
+                  <div className="mt-6">
+                    <p className="text-[9px] font-['Inter',sans-serif] tracking-[2px] uppercase text-white/25 text-center mb-3">Para estas prendas</p>
+                    <div className="flex flex-col gap-1.5">
+                      {arribaProds.map((p, i) => (
+                        <div key={i} className="flex items-center gap-2.5 bg-white/4 border border-white/8 px-3 py-2">
+                          <img src={p.img} alt={p.name} className="w-9 h-9 object-cover flex-shrink-0" />
+                          <span className="text-xs font-['Inter',sans-serif] text-white/55 truncate">{p.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              <button onClick={() => setStep(2)} className="mt-6 mx-auto block text-[10px] font-['Inter',sans-serif] font-medium tracking-[2px] uppercase text-white/25 hover:text-white/50 transition-colors">
                 ← Volver
               </button>
             </motion.div>
@@ -731,7 +766,6 @@ export default function Home() {
               <div className="text-center mb-6">
                 <p className="text-[10px] font-['Inter',sans-serif] font-semibold tracking-[3px] uppercase text-[#8B6347] mb-2">Parte de abajo</p>
                 <h2 className="text-2xl font-bold text-white">¿Cuál es tu talle de abajo?</h2>
-                <p className="text-xs font-['Inter',sans-serif] font-light text-white/35 mt-1.5">Pantalones, jeans y calzado</p>
                 <SizeGuide />
               </div>
               <div className="flex gap-3 justify-center flex-wrap">
@@ -747,7 +781,25 @@ export default function Home() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setStep(3)} className="mt-8 mx-auto block text-[10px] font-['Inter',sans-serif] font-medium tracking-[2px] uppercase text-white/25 hover:text-white/50 transition-colors">
+              {/* Prendas de abajo del look — contexto para la clienta */}
+              {look && (() => {
+                const abajoProds = look.products.filter(p => PRODUCT_CATEGORIES[p.handle] === "abajo");
+                if (!abajoProds.length) return null;
+                return (
+                  <div className="mt-6">
+                    <p className="text-[9px] font-['Inter',sans-serif] tracking-[2px] uppercase text-white/25 text-center mb-3">Para estas prendas</p>
+                    <div className="flex flex-col gap-1.5">
+                      {abajoProds.map((p, i) => (
+                        <div key={i} className="flex items-center gap-2.5 bg-white/4 border border-white/8 px-3 py-2">
+                          <img src={p.img} alt={p.name} className="w-9 h-9 object-cover flex-shrink-0" />
+                          <span className="text-xs font-['Inter',sans-serif] text-white/55 truncate">{p.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              <button onClick={() => setStep(3)} className="mt-6 mx-auto block text-[10px] font-['Inter',sans-serif] font-medium tracking-[2px] uppercase text-white/25 hover:text-white/50 transition-colors">
                 ← Volver
               </button>
             </motion.div>
