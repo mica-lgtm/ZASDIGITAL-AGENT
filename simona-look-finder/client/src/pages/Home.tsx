@@ -5,6 +5,9 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-mo
 
 const HERO_BG = "https://d2xsxph8kpxj0f.cloudfront.net/310519663489253832/GCNEfmb632ab7e3kLMogtf/simona_hero_bg-gSwKLDuL9uBpMGpRgbPyqf.webp";
 
+// Cupón manual: no se aplica solo, la clienta lo ingresa a mano en el checkout de Tienda Nube.
+const COUPON_CODE = "INVIERNO15";
+
 // ─── STATIC UI DATA ──────────────────────────────────────────────────────────
 
 const OCCASIONS = [
@@ -82,6 +85,33 @@ function useCatalog() {
 function calcTotal(products: Product[]): string {
   const total = products.reduce((acc, p) => acc + parseInt(p.price.replace(/\D/g, ""), 10), 0);
   return `$${total.toLocaleString("es-AR")}`;
+}
+
+// Resuelve el look a mostrar: si el pedido (ocasión+estilo) no tiene productos
+// disponibles, busca otro estilo dentro de la misma ocasión y, si tampoco hay,
+// cualquier otro look disponible en el catálogo. Nunca deja al usuario frente
+// a un "look no disponible": siempre muestra algo con productos reales.
+function pickAvailableLookKey(catalog: Catalog, occasion: string, style: string): string {
+  const keys = Object.keys(catalog);
+  if (keys.length === 0) return "";
+
+  const hasProducts = (key: string) => (catalog[key]?.products.length ?? 0) > 0;
+  const primary = occasion && style ? `${occasion}-${style}` : "";
+
+  if (primary && hasProducts(primary)) return primary;
+
+  if (occasion) {
+    for (const s of STYLES) {
+      const key = `${occasion}-${s.id}`;
+      if (key !== primary && hasProducts(key)) return key;
+    }
+  }
+
+  for (const key of keys) {
+    if (hasProducts(key)) return key;
+  }
+
+  return (primary && catalog[primary]) ? primary : keys[0];
 }
 
 // ─── SWIPEABLE CARD STACK ────────────────────────────────────────────────────
@@ -250,6 +280,41 @@ function ProgressBar({ step }: { step: number }) {
   );
 }
 
+// ─── COUPON BUTTON ───────────────────────────────────────────────────────────
+
+function CouponButton() {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(COUPON_CODE).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      // fallback: select text
+    });
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="w-full border border-dashed border-[#C4A882]/40 hover:border-[#C4A882] bg-[#C4A882]/5 text-[#C4A882] font-['Inter',sans-serif] text-xs py-3 text-center transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
+    >
+      {copied ? (
+        <>
+          <span>✓</span>
+          <span className="tracking-[2px] uppercase font-medium">Cupón copiado</span>
+        </>
+      ) : (
+        <>
+          <span className="text-white/40">Usá el cupón en el checkout:</span>
+          <span className="font-bold tracking-[2px]">{COUPON_CODE}</span>
+          <span>⎘</span>
+        </>
+      )}
+    </button>
+  );
+}
+
 // ─── SHARE BUTTON ────────────────────────────────────────────────────────────
 
 function ShareButton({ lookKey, talle }: { lookKey: string; talle: string }) {
@@ -303,9 +368,9 @@ export default function Home() {
 
   const { catalog, error: catalogError } = useCatalog();
 
-  const lookKey = occasion && style ? `${occasion}-${style}` : "";
+  const lookKey = catalog ? pickAvailableLookKey(catalog, occasion, style) : "";
   const look = catalog && lookKey ? (catalog[lookKey] ?? null) : null;
-  const lookNotFound = catalog && lookKey && !look && !catalogError;
+  const resolvedOccasion = lookKey ? lookKey.split("-")[0] : occasion;
 
   // Update URL when look is set (for sharable links)
   useEffect(() => {
@@ -511,17 +576,6 @@ export default function Home() {
                   </button>
                 </div>
 
-              ) : lookNotFound ? (
-                <div className="flex flex-col items-center gap-4 py-12 text-center">
-                  <p className="text-white/50 font-['Inter',sans-serif] text-sm">Look no encontrado.</p>
-                  <button
-                    onClick={reset}
-                    className="text-[10px] font-['Inter',sans-serif] tracking-[2px] uppercase text-[#C4A882] hover:text-white transition-colors"
-                  >
-                    ← Armar un look
-                  </button>
-                </div>
-
               ) : !look ? (
                 <div className="flex flex-col items-center gap-4 py-12">
                   <div className="w-8 h-8 border-2 border-[#C4A882] border-t-transparent rounded-full animate-spin" />
@@ -536,7 +590,12 @@ export default function Home() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                     <div className="absolute top-4 left-4">
                       <span className="text-[9px] font-['Inter',sans-serif] font-semibold tracking-[3px] uppercase text-[#C4A882] bg-black/40 px-2 py-1">
-                        {OCCASIONS.find(o => o.id === occasion)?.label} · Talle {talle}
+                        {OCCASIONS.find(o => o.id === resolvedOccasion)?.label} · Talle {talle}
+                      </span>
+                    </div>
+                    <div className="absolute top-4 right-4">
+                      <span className="text-[9px] font-['Inter',sans-serif] font-bold tracking-[2px] uppercase text-white bg-[#8B6347] px-2 py-1">
+                        Look completo 15% off
                       </span>
                     </div>
                     <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
@@ -634,6 +693,9 @@ export default function Home() {
                         {cartError}
                       </motion.p>
                     )}
+
+                    {/* Cupón: se ingresa a mano en el checkout de Tienda Nube */}
+                    <CouponButton />
 
                     {/* Secondary: ver colección */}
                     <a

@@ -105,6 +105,7 @@ type TNProduct = {
   images: { src: string }[];
   canonical_url: string;
   variants: TNVariant[];
+  published?: boolean;
 };
 
 function tnStr(val: { es?: string; en?: string } | string | undefined): string {
@@ -135,6 +136,7 @@ type EnrichedProduct = {
   url: string;
   variantsByTalle: Record<string, number>;
   defaultVariantId: number | null;
+  published: boolean;
 };
 
 function enrichProduct(p: TNProduct, handle?: string): EnrichedProduct {
@@ -154,7 +156,15 @@ function enrichProduct(p: TNProduct, handle?: string): EnrichedProduct {
     if (t) variantsByTalle[t] = v.id;
   }
 
-  return { name, price, img, url, variantsByTalle, defaultVariantId: defaultVariant?.id ?? null };
+  return {
+    name,
+    price,
+    img,
+    url,
+    variantsByTalle,
+    defaultVariantId: defaultVariant?.id ?? null,
+    published: p.published !== false,
+  };
 }
 
 // ─── PRODUCT ID MAP ──────────────────────────────────────────────────────────
@@ -204,10 +214,14 @@ async function getProductsByHandle(): Promise<Map<string, EnrichedProduct>> {
 
   if (!ACCESS_TOKEN) {
     for (const [handle, s] of Object.entries(STATIC_PRODUCTS)) {
-      byHandle.set(handle, { ...s, variantsByTalle: {}, defaultVariantId: null });
+      byHandle.set(handle, { ...s, variantsByTalle: {}, defaultVariantId: null, published: true });
     }
     return byHandle;
   }
+
+  // Handles confirmados como despublicados/no visibles en la tienda: no deben
+  // mostrarse ni caer al fallback estático (mostraría el mismo producto roto).
+  const unpublished = new Set<string>();
 
   // Fetch todos los productos en paralelo por ID (14 requests simultáneos)
   const results = await Promise.allSettled(
@@ -220,14 +234,19 @@ async function getProductsByHandle(): Promise<Map<string, EnrichedProduct>> {
   for (const result of results) {
     if (result.status === "fulfilled" && result.value.product) {
       const { handle, product } = result.value;
-      byHandle.set(handle, enrichProduct(product, handle));
+      const enriched = enrichProduct(product, handle);
+      if (enriched.published) {
+        byHandle.set(handle, enriched);
+      } else {
+        unpublished.add(handle);
+      }
     }
   }
 
-  // Fallback estático para los que no se encontraron
+  // Fallback estático para los que no se encontraron (pero no para despublicados)
   for (const [handle, s] of Object.entries(STATIC_PRODUCTS)) {
-    if (!byHandle.has(handle)) {
-      byHandle.set(handle, { ...s, variantsByTalle: {}, defaultVariantId: null });
+    if (!byHandle.has(handle) && !unpublished.has(handle)) {
+      byHandle.set(handle, { ...s, variantsByTalle: {}, defaultVariantId: null, published: true });
     }
   }
 
@@ -263,11 +282,12 @@ async function startServer() {
         looks[key] = {
           name: def.name,
           heroImg: def.heroImg,
-          products: def.handles.map((handle) => {
-            const p = products.get(handle) || STATIC_PRODUCTS[handle];
-            if (!p) return { name: handle, price: "", img: "", url: "" };
-            return { name: p.name, price: p.price, img: p.img, url: p.url };
-          }),
+          // Solo se muestran productos publicados/visibles en la tienda; los
+          // despublicados o no encontrados quedan afuera para no mostrar links rotos.
+          products: def.handles
+            .map((handle) => products.get(handle))
+            .filter((p): p is NonNullable<typeof p> => !!p)
+            .map((p) => ({ name: p.name, price: p.price, img: p.img, url: p.url })),
         };
       }
 

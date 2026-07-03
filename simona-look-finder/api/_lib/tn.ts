@@ -116,6 +116,7 @@ export type TNProduct = {
   images: { src: string }[];
   canonical_url: string;
   variants: TNVariant[];
+  published?: boolean;
 };
 
 export type EnrichedProduct = {
@@ -125,6 +126,7 @@ export type EnrichedProduct = {
   url: string;
   variantsByTalle: Record<string, number>;
   defaultVariantId: number | null;
+  published: boolean;
 };
 
 export function tnStr(val: { es?: string; en?: string } | string | undefined): string {
@@ -162,7 +164,15 @@ export function enrichProduct(p: TNProduct, handle?: string): EnrichedProduct {
     if (t) variantsByTalle[t] = v.id;
   }
 
-  return { name, price, img, url, variantsByTalle, defaultVariantId: defaultVariant?.id ?? null };
+  return {
+    name,
+    price,
+    img,
+    url,
+    variantsByTalle,
+    defaultVariantId: defaultVariant?.id ?? null,
+    published: p.published !== false,
+  };
 }
 
 // ─── CATALOG CACHE ───────────────────────────────────────────────────────────
@@ -192,10 +202,14 @@ export async function getProductsByHandle(): Promise<Map<string, EnrichedProduct
 
   if (!ACCESS_TOKEN) {
     for (const [handle, s] of Object.entries(STATIC_PRODUCTS)) {
-      byHandle.set(handle, { ...s, variantsByTalle: {}, defaultVariantId: null });
+      byHandle.set(handle, { ...s, variantsByTalle: {}, defaultVariantId: null, published: true });
     }
     return byHandle;
   }
+
+  // Handles confirmados como despublicados/no visibles en la tienda: no deben
+  // mostrarse ni caer al fallback estático (mostraría el mismo producto roto).
+  const unpublished = new Set<string>();
 
   const results = await Promise.allSettled(
     Object.entries(PRODUCT_IDS).map(async ([handle, id]) => {
@@ -207,13 +221,18 @@ export async function getProductsByHandle(): Promise<Map<string, EnrichedProduct
   for (const result of results) {
     if (result.status === "fulfilled" && result.value.product) {
       const { handle, product } = result.value;
-      byHandle.set(handle, enrichProduct(product, handle));
+      const enriched = enrichProduct(product, handle);
+      if (enriched.published) {
+        byHandle.set(handle, enriched);
+      } else {
+        unpublished.add(handle);
+      }
     }
   }
 
   for (const [handle, s] of Object.entries(STATIC_PRODUCTS)) {
-    if (!byHandle.has(handle)) {
-      byHandle.set(handle, { ...s, variantsByTalle: {}, defaultVariantId: null });
+    if (!byHandle.has(handle) && !unpublished.has(handle)) {
+      byHandle.set(handle, { ...s, variantsByTalle: {}, defaultVariantId: null, published: true });
     }
   }
 

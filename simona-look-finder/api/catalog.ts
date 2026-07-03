@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { getProductsByHandle, LOOK_DEFS, STATIC_PRODUCTS } from "./_lib/tn.js";
+import { getProductsByHandle, LOOK_DEFS } from "./_lib/tn.js";
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
@@ -14,11 +14,12 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       looks[key] = {
         name: def.name,
         heroImg: def.heroImg,
-        products: def.handles.map((handle) => {
-          const p = products.get(handle) || STATIC_PRODUCTS[handle];
-          if (!p) return { name: handle, price: "", img: "", url: "" };
-          return { name: p.name, price: p.price, img: p.img, url: p.url };
-        }),
+        // Solo se muestran productos publicados/visibles en la tienda; los
+        // despublicados o no encontrados quedan afuera para no mostrar links rotos.
+        products: def.handles
+          .map((handle) => products.get(handle))
+          .filter((p): p is NonNullable<typeof p> => !!p)
+          .map((p) => ({ name: p.name, price: p.price, img: p.img, url: p.url })),
       };
     }
 
