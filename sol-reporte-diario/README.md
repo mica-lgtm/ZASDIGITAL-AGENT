@@ -4,9 +4,9 @@ Ver `CLAUDE.md` para identidad, alcance y reglas duras. Este README es el setup 
 
 ## Estado actual (Fase 1 — MVP)
 
-Implementados y probados: `canales/meta_ads.py`, `canales/tienda_nube.py`, `roster.py`, `sheets.py`, `reporte.py`, `formato_whatsapp.py`, `whatsapp.py`, `orquestador.py`.
+Implementados y probados: `canales/meta_ads.py`, `canales/google_ads.py`, `canales/tienda_nube.py`, `roster.py`, `sheets.py`, `reporte.py`, `formato_whatsapp.py`, `whatsapp.py`, `orquestador.py`.
 
-Pendientes de implementar (Fase 2 — quedan como stubs que levantan `NotImplementedError`, ya registrados en `reporte.CANALES` para cuando se completen): `canales/google_ads.py`, `canales/tiktok_ads.py`, `canales/pinterest_ads.py`, `canales/meli_ads.py`, `canales/perfit.py`, `canales/meta_organico.py`.
+Pendientes de implementar (Fase 2 — quedan como stubs que levantan `NotImplementedError`, ya registrados en `reporte.CANALES` para cuando se completen): `canales/tiktok_ads.py`, `canales/pinterest_ads.py`, `canales/meli_ads.py`, `canales/perfit.py`, `canales/meta_organico.py`.
 
 ## Prerrequisitos antes de correr esto en serio (Fase 0, ver plan)
 
@@ -14,8 +14,9 @@ Pendientes de implementar (Fase 2 — quedan como stubs que levantan `NotImpleme
    - La planilla necesita una hoja de roster (por defecto `Roster`, configurable con `SOL_SHEETS_HOJA_ROSTER`) con columnas `marca` y una columna por canal (valor no vacío = activo; ver `roster.py`).
    - Y una hoja de detalle diario (por defecto `Datos Diarios`, configurable con `SOL_SHEETS_HOJA_DATOS`) donde `sheets.py` va a appendear filas.
 2. **Meta Ads**: un token de acceso de larga duración (System User, no el de 24hs) del Business Manager que ya usa Mateo, con permiso `ads_read` sobre las cuentas publicitarias de cada marca. Completar `SOL_META_ACCESS_TOKEN` y, por marca, `SOL_<MARCA>_META_AD_ACCOUNT_ID` (el ID numérico de la cuenta, sin el prefijo `act_`).
-3. **Tienda Nube**: no requiere configuración acá — `canales/tienda_nube.py` reusa `dante-desarrollo-tn/.env` de solo lectura. Alcanza con que ese `.env` de Dante esté completo para las marcas que correspondan.
-4. **WhatsApp** (recién necesario para Fase 4): activar WhatsApp Business Platform en el Business Manager, conseguir número + token permanente + plantilla de mensaje aprobada por Meta. Completar las variables `SOL_WHATSAPP_*`. Hasta que esto esté listo, correr todo con `--sin-whatsapp` (imprime el mensaje por consola en vez de enviarlo).
+3. **Google Ads**: OAuth2 (no un bearer token simple). Necesitás un developer token aprobado (nivel Basic o superior), un cliente OAuth2 (client_id/client_secret) y un refresh token generado una vez con ese cliente contra la cuenta MCC. Completar `SOL_GOOGLE_ADS_DEVELOPER_TOKEN`, `SOL_GOOGLE_ADS_CLIENT_ID`, `SOL_GOOGLE_ADS_CLIENT_SECRET`, `SOL_GOOGLE_ADS_REFRESH_TOKEN`, `SOL_GOOGLE_ADS_LOGIN_CUSTOMER_ID` (ID de la MCC) y, por marca, `SOL_<MARCA>_GOOGLE_ADS_CUSTOMER_ID` (ID de la cuenta de cliente).
+4. **Tienda Nube**: no requiere configuración acá — `canales/tienda_nube.py` reusa `dante-desarrollo-tn/.env` de solo lectura. Alcanza con que ese `.env` de Dante esté completo para las marcas que correspondan.
+5. **WhatsApp** (recién necesario para Fase 4): activar WhatsApp Business Platform en el Business Manager, conseguir número + token permanente + plantilla de mensaje aprobada por Meta. Completar las variables `SOL_WHATSAPP_*`. Hasta que esto esté listo, correr todo con `--sin-whatsapp` (imprime el mensaje por consola en vez de enviarlo).
 
 ## Instalación
 

@@ -2,5 +2,6 @@ requests>=2.31
 python-dotenv>=1.0
 gspread>=6.1
 google-auth>=2.30
+google-ads>=31.1
 pytest>=8.0
 requests-mock>=1.12

@@ -1,8 +1,8 @@
 import pytest
 
-from canales import google_ads, meli_ads, meta_organico, perfit, pinterest_ads, tiktok_ads
+from canales import meli_ads, meta_organico, perfit, pinterest_ads, tiktok_ads
 
-STUBS = [google_ads, meli_ads, meta_organico, perfit, pinterest_ads, tiktok_ads]
+STUBS = [meli_ads, meta_organico, perfit, pinterest_ads, tiktok_ads]
 
 
 @pytest.mark.parametrize("modulo", STUBS)
