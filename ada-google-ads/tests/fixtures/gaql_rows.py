@@ -178,6 +178,16 @@ def fila_cambio(change_date_time="2026-07-06 10:00:00", tipo_recurso="AD_GROUP",
     })
 
 
+def fila_cuenta_cliente(id_=1112223333, nombre="Simona", estado="ENABLED", manager=False,
+                         level=1, currency_code="ARS"):
+    return _ns({
+        "customer_client": {
+            "id": id_, "descriptive_name": nombre, "status": estado,
+            "manager": manager, "level": level, "currency_code": currency_code,
+        },
+    })
+
+
 def fila_recomendacion(resource_name="customers/1/recommendations/1", tipo="KEYWORD",
                         campaign="customers/1/campaigns/1", costo_actual_micros=100_000_000,
                         costo_potencial_micros=120_000_000):

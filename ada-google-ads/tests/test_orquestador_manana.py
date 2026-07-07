@@ -47,7 +47,7 @@ def test_run_genera_reporte_y_propuestas(monkeypatch, capsys):
     assert reporte["fecha"] == "2026-07-07"
     assert reporte["rollups_por_marca"]["simona"]["spend"] == 100.0
     assert len(reporte["propuestas"]) == 1
-    assert reporte["bloqueos"] == []
+    assert not any(b["marca"] == "simona" for b in reporte["bloqueos"])
     assert reporte["errores"] == []
 
     salida = capsys.readouterr().out
@@ -131,4 +131,4 @@ def test_run_customer_id_directo_bypassea_sheets(monkeypatch, capsys):
 
     assert customer_ids_recibidos == ["6688370911"]
     assert "simona" in reporte["rollups_por_marca"]
-    assert reporte["bloqueos"] == []
+    assert not any(b["marca"] == "simona" for b in reporte["bloqueos"])

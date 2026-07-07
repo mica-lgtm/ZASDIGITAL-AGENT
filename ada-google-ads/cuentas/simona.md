@@ -51,12 +51,25 @@
 ## Google Ads
 
 - ID de cuenta: ver `ADA_SIMONA_GOOGLE_ADS_CUSTOMER_ID` en `.env` / `cuentas-publicitarias-google-ads.md`.
-- Objetivo de cuenta: CPA objetivo / ROAS objetivo: **dato pendiente** -- confirmar con Mica antes de usar como umbral en las heurísticas de `conocimiento/diagnosticos-y-senales.md`.
-- Conversion actions trackeadas: dato pendiente -- confirmar vía `ads/reportes.reporte_conversion_actions` en la primera corrida real.
-- Tipos de campaña permitidos: [x] Search -- confirmado como el único tipo habilitado por ahora (Shopping/PMax/Display quedan pendientes de habilitar).
-- Tope de presupuesto diario/mensual: dato pendiente -- confirmar con Mica antes de aprobar cualquier `ajuste_presupuesto`.
+- Objetivo de cuenta: CPA objetivo / ROAS objetivo: **dato pendiente** -- confirmar con Mica antes de usar como umbral en las heurísticas de `conocimiento/diagnosticos-y-senales.md`. El documento "Simona x ZAS - Propuesta Integral Julio 2026" propone un ROAS de cuenta consolidado (todos los canales) de 10x, con Google Ads aportando ~8x -- son cifras de propuesta comercial, no un objetivo confirmado por Mica específicamente para Google.
+- Conversion actions trackeadas (auditoría real 2026-07-07): 26 totales, 23 `ENABLED` -- incluye varias conversiones de la misma familia con nombres parecidos (`Purchase`, `GA4SIMONA (web) purchase`, `Simona Tienda Nube - GA4 (web) purchase`, `Tiendanube Website purchases`, `Tiendanube Backend purchases`, más eventos de embudo `cp1_agregar_al_carrito`/`cp2_iniciar_pago`/`cp3_información_de_pago`). **Mismo riesgo que en Magnolias**: varias conversiones de compra en paralelo pueden estar duplicando el conteo. Confirmar con Mica cuál es la conversión primaria antes de usar CPA/ROAS como umbral de decisión.
+- Tipos de campaña permitidos: **corregido tras auditoría real (2026-07-07) -- la ficha decía "solo Search" pero esto ya no es así.** La cuenta real tiene campañas `ENABLED` de **SEARCH, DISPLAY, PERFORMANCE_MAX, VIDEO y DEMAND_GEN** simultáneamente (20 campañas `ENABLED` sobre 148 totales en la ventana auditada). El checklist de abajo se corrige para reflejar la realidad, no lo que decía el documento de propuesta ni la versión anterior de esta ficha: [x] Search [x] Shopping/PMax [x] Display [x] Video [x] Demand Gen -- **confirmar con Mica si esta apertura de canales fue una decisión consciente o quedó así por creación de campañas de temporadas pasadas sin que se haya revisado el alcance.**
+- Presupuesto Google Ads julio 2026 (propuesto, no confirmado como tope duro): $7,8M-$9,3M, equivalente al 20% del presupuesto total de paid media de la marca ($39-46,5M) según el documento de propuesta. Confirmar con Mica si esta cifra es el tope real a usar en `diagnosticos-y-senales.md` (impression share perdido por presupuesto) o si el tope de la cuenta de Google es otro.
+- Tope de presupuesto diario/mensual: dato pendiente de confirmación explícita por Mica -- ver cifra propuesta arriba.
 - Negativas propias: además de `conocimiento/negativas-baseline.md`, evaluar excluir búsquedas de "outlet"/"usado" si la marca no vende second-hand (confirmar).
 - Calendario de estacionalidad/promos específico: Hot Sale, Cyber, Final Sale, lanzamientos de temporada (otoño/invierno y verano) -- cruzar fechas exactas con `conocimiento/calendario-estacional.md` en cada edición.
+
+### Auditoría real de la cuenta (2026-07-07, ventana 2026-06-01 a 2026-07-07)
+
+- 148 campañas totales, **20 en estado ENABLED**, spend $5.319.998, 918 conversiones, $114.958.771 en ingresos, ROAS 21,6 blended (sujeto al riesgo de conversiones duplicadas señalado arriba).
+- De las 20 `ENABLED`, **15 tienen spend $0** -- un patrón de leftover estacional mucho más marcado que en las otras cuentas: campañas nombradas para Sale Verano, Hot Sale, Día de la Madre, Cyber, Black Friday, Navidad 2025, todas con nombres tipo `N1/N2/N3 - (Temporada) - Canal` en Display/Video/Demand Gen/PMax. Es probable que esta sea la explicación real de por qué la cuenta "tiene" Display/Video/Demand Gen: se crearon para campañas de temporada específicas y nunca se pausaron ni se removieron al terminar la fecha. **Candidatas fuertes a una limpieza formal vía propuesta** (no se pausa nada sin `APROBADO`).
+- Campañas con spend real (5 de las 20 activas):
+  - `BUS - Marca - C` (Search): $3.299.960, ROAS 19,76, IS perdida por presupuesto 14,9% -- candidata a aumento de presupuesto.
+  - `PMax - Top Sellers - Jun 2026`: $635.312, ROAS 18,98, IS perdida por presupuesto 15% -- candidata a aumento de presupuesto.
+  - `P Max - Cupon ARGENTINA 20% OFF`: $264.082, ROAS 23,22, IS perdida por presupuesto 7,6%.
+  - `PMax - Simona Fest`: $94.726, ROAS 13,39, IS perdida por presupuesto 17,2%.
+  - `BUS - Simona Fest` (Search): $74.071, ROAS 2,79 -- **ROAS muy por debajo del resto de la cuenta**, candidata a revisar (keywords, landing, o si el nombre "Fest" corresponde a una promo ya vencida).
+- 103 asset groups de PMax detectados (91 `ENABLED`) -- volumen alto, consistente con que PMax lleva tiempo en uso real pese a lo que decía la ficha.
 
 ## Canales activos
 
@@ -71,7 +84,10 @@
 ## Pendientes de información
 
 - [ ] Confirmar CPA/ROAS objetivo para Google Ads.
-- [ ] Confirmar conversion actions activas y si están trackeando correctamente.
+- [x] ~~Confirmar si Shopping/Performance Max están habilitados~~ -- resuelto por auditoría real 2026-07-07: la cuenta ya tiene Search, Display, PMax, Video y Demand Gen activos. Pendiente ahora: confirmar con Mica si esto fue decisión consciente.
+- [ ] Resolver el riesgo de conversion actions duplicadas (`Purchase`, 3 variantes de "purchase" de GA4/Tiendanube) antes de confiar en el ROAS blended de 21,6x.
 - [ ] Confirmar tope de presupuesto diario/mensual.
-- [ ] Confirmar si Shopping/Performance Max están habilitados para esta cuenta o si por ahora es solo Search.
 - [ ] Confirmar vigencia de envío gratis / cuotas / transferencia al momento de esta auditoría.
+- [ ] Confirmar si $7,8M-$9,3M es el tope real de presupuesto de Google Ads para julio 2026 o solo una cifra de propuesta comercial.
+- [ ] Aprobar o rechazar la propuesta de pausar las 15 campañas ENABLED con spend $0 (leftover de Sale Verano/Hot Sale/Día de la Madre/Cyber/Black Friday/Navidad 2025).
+- [ ] Revisar por qué `BUS - Simona Fest` tiene ROAS 2,79, muy por debajo del resto de campañas activas de la cuenta (18-23x).

@@ -181,6 +181,18 @@ QUERY_CAMBIOS_RECIENTES = """
     ORDER BY change_event.change_date_time DESC
 """
 
+QUERY_CUENTAS_CLIENTE = """
+    SELECT
+        customer_client.id,
+        customer_client.descriptive_name,
+        customer_client.status,
+        customer_client.manager,
+        customer_client.level,
+        customer_client.currency_code
+    FROM customer_client
+    WHERE customer_client.status = 'ENABLED'
+"""
+
 QUERY_RECOMENDACIONES = """
     SELECT
         recommendation.resource_name,

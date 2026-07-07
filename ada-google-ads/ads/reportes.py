@@ -21,6 +21,15 @@ def _roas(spend, ingresos):
     return round(ingresos / spend, 2) if spend else None
 
 
+def _nombre_enum(valor):
+    """Los campos enum de la API real (google-ads, proto-plus) son objetos
+    Enum cuyo __str__ devuelve el valor numérico (ej. "3"), no el nombre --
+    hay que leer `.name` explícitamente (ej. "PAUSED"). Los fixtures de test
+    pasan directamente el string ya legible (sin atributo `.name`), así que
+    devolvemos el valor tal cual si no es un enum real."""
+    return getattr(valor, "name", valor)
+
+
 # --- Campañas ------------------------------------------------------------
 
 def _normalizar_campana(row):
@@ -31,8 +40,8 @@ def _normalizar_campana(row):
     return {
         "campaign_id": row.campaign.id,
         "nombre": row.campaign.name,
-        "estado": str(row.campaign.status),
-        "tipo_canal": str(row.campaign.advertising_channel_type),
+        "estado": _nombre_enum(row.campaign.status),
+        "tipo_canal": _nombre_enum(row.campaign.advertising_channel_type),
         "budget_resource": row.campaign.campaign_budget,
         "spend": spend,
         "impresiones": int(m.impressions),
@@ -97,7 +106,7 @@ def _normalizar_grupo(row):
     return {
         "ad_group_id": row.ad_group.id,
         "nombre": row.ad_group.name,
-        "estado": str(row.ad_group.status),
+        "estado": _nombre_enum(row.ad_group.status),
         "campaign_id": row.campaign.id,
         "campaign_nombre": row.campaign.name,
         "spend": spend,
@@ -125,9 +134,9 @@ def _normalizar_anuncio(row):
     policy = row.ad_group_ad.policy_summary
     return {
         "ad_id": row.ad_group_ad.ad.id,
-        "estado": str(row.ad_group_ad.status),
-        "approval_status": str(policy.approval_status),
-        "review_status": str(policy.review_status),
+        "estado": _nombre_enum(row.ad_group_ad.status),
+        "approval_status": _nombre_enum(policy.approval_status),
+        "review_status": _nombre_enum(policy.review_status),
         "ad_group_id": row.ad_group.id,
         "ad_group_nombre": row.ad_group.name,
         "campaign_id": row.campaign.id,
@@ -156,8 +165,8 @@ def _normalizar_activo_rsa(row):
         "campaign_id": row.campaign.id,
         "asset_id": row.asset.id,
         "texto": row.asset.text_asset.text,
-        "tipo_campo": str(view.field_type),
-        "performance_label": str(view.performance_label),
+        "tipo_campo": _nombre_enum(view.field_type),
+        "performance_label": _nombre_enum(view.performance_label),
     }
 
 
@@ -177,12 +186,12 @@ def _normalizar_keyword(row):
     return {
         "criterion_id": crit.criterion_id,
         "texto": crit.keyword.text,
-        "match_type": str(crit.keyword.match_type),
-        "estado": str(crit.status),
+        "match_type": _nombre_enum(crit.keyword.match_type),
+        "estado": _nombre_enum(crit.status),
         "quality_score": crit.quality_info.quality_score,
-        "creative_quality_score": str(crit.quality_info.creative_quality_score),
-        "post_click_quality_score": str(crit.quality_info.post_click_quality_score),
-        "search_predicted_ctr": str(crit.quality_info.search_predicted_ctr),
+        "creative_quality_score": _nombre_enum(crit.quality_info.creative_quality_score),
+        "post_click_quality_score": _nombre_enum(crit.quality_info.post_click_quality_score),
+        "search_predicted_ctr": _nombre_enum(crit.quality_info.search_predicted_ctr),
         "ad_group_id": row.ad_group.id,
         "campaign_id": row.campaign.id,
         "spend": spend,
@@ -208,7 +217,7 @@ def _normalizar_negativa(row):
         "campaign_id": row.campaign.id,
         "criterion_id": crit.criterion_id,
         "texto": crit.keyword.text,
-        "match_type": str(crit.keyword.match_type),
+        "match_type": _nombre_enum(crit.keyword.match_type),
     }
 
 
@@ -225,7 +234,7 @@ def _normalizar_search_term(row):
     ingresos = float(m.conversions_value)
     return {
         "termino": row.search_term_view.search_term,
-        "estado": str(row.search_term_view.status),
+        "estado": _nombre_enum(row.search_term_view.status),
         "campaign_id": row.campaign.id,
         "ad_group_id": row.ad_group.id,
         "spend": spend,
@@ -250,8 +259,8 @@ def _normalizar_conversion_action(row):
     return {
         "id": ca.id,
         "nombre": ca.name,
-        "estado": str(ca.status),
-        "tipo": str(ca.type_),
+        "estado": _nombre_enum(ca.status),
+        "tipo": _nombre_enum(ca.type_),
     }
 
 
@@ -290,7 +299,7 @@ def _normalizar_asset_group(row):
     return {
         "asset_group_id": row.asset_group.id,
         "nombre": row.asset_group.name,
-        "estado": str(row.asset_group.status),
+        "estado": _nombre_enum(row.asset_group.status),
         "campaign_id": row.campaign.id,
         "campaign_nombre": row.campaign.name,
     }
@@ -300,16 +309,38 @@ def reporte_asset_groups(client, customer_id):
     return [_normalizar_asset_group(row) for row in client.buscar(customer_id, queries.QUERY_ASSET_GROUPS)]
 
 
+# --- Cuentas cliente bajo la MCC (descubrir qué cuentas existen) -------
+
+def _normalizar_cuenta_cliente(row):
+    cc = row.customer_client
+    return {
+        "customer_id": str(cc.id),
+        "nombre": cc.descriptive_name,
+        "estado": _nombre_enum(cc.status),
+        "es_manager": bool(cc.manager),
+        "nivel": int(cc.level),
+        "moneda": cc.currency_code,
+    }
+
+
+def reporte_cuentas_cliente(client, login_customer_id):
+    """Lista las cuentas cliente visibles bajo la MCC -- corre la query contra
+    la propia MCC (customer_id == login_customer_id) para descubrir qué
+    cuentas existen, sin depender de ninguna fuente externa al canal."""
+    filas = client.buscar(login_customer_id, queries.QUERY_CUENTAS_CLIENTE)
+    return [_normalizar_cuenta_cliente(row) for row in filas]
+
+
 # --- Cambios recientes (detectar ediciones manuales fuera de Ada) -------
 
 def _normalizar_cambio(row):
     ce = row.change_event
     return {
         "fecha_hora": ce.change_date_time,
-        "tipo_recurso": str(ce.change_resource_type),
-        "tipo_cliente": str(ce.client_type),
+        "tipo_recurso": _nombre_enum(ce.change_resource_type),
+        "tipo_cliente": _nombre_enum(ce.client_type),
         "usuario": ce.user_email,
-        "operacion": str(ce.resource_change_operation),
+        "operacion": _nombre_enum(ce.resource_change_operation),
     }
 
 
@@ -324,7 +355,7 @@ def _normalizar_recomendacion(row):
     rec = row.recommendation
     return {
         "resource_name": rec.resource_name,
-        "tipo": str(rec.type_),
+        "tipo": _nombre_enum(rec.type_),
         "campaign": rec.campaign,
         "costo_actual": _micros(rec.impact.base_metrics.cost_micros),
         "costo_potencial": _micros(rec.impact.potential_metrics.cost_micros),

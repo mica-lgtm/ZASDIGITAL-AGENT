@@ -115,10 +115,11 @@ def procesar_marca_tarde(cliente, marca, customer_id, hoy, desde_baseline, hasta
     pacing = ads_reportes.reporte_pacing_hoy(cliente, customer_id, hoy)
     anuncios_hoy = ads_reportes.reporte_anuncios(cliente, customer_id, hoy, hoy)
 
-    from datetime import datetime
+    from datetime import datetime, timedelta, timezone
 
-    ARGENTINA_HORA_ACTUAL = datetime.now().hour
-    fraccion_dia = min(max(ARGENTINA_HORA_ACTUAL / 24, 0.01), 1.0)
+    ARGENTINA = timezone(timedelta(hours=-3))
+    hora_actual_argentina = datetime.now(ARGENTINA).hour
+    fraccion_dia = min(max(hora_actual_argentina / 24, 0.01), 1.0)
 
     alertas = []
     ids_propuestas = []

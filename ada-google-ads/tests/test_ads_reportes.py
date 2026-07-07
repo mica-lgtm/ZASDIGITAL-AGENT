@@ -120,6 +120,14 @@ def test_reporte_cambios_recientes():
     assert resultado[0]["operacion"] == "UPDATE"
 
 
+def test_reporte_cuentas_cliente():
+    fila = filas.fila_cuenta_cliente(id_=6688370911, nombre="Simona", estado="ENABLED", manager=False)
+    resultado = reportes.reporte_cuentas_cliente(_ClienteFalso([fila]), "4200408829")
+    assert resultado[0]["customer_id"] == "6688370911"
+    assert resultado[0]["nombre"] == "Simona"
+    assert resultado[0]["es_manager"] is False
+
+
 def test_reporte_recomendaciones():
     fila = filas.fila_recomendacion(tipo="KEYWORD", costo_potencial_micros=200_000_000)
     resultado = reportes.reporte_recomendaciones(_ClienteFalso([fila]), "111")
