@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "../juanitas.css";
-import { FAMILY_OPTIONS, LOGO_URL, type FamilyId } from "../data/catalog";
+import { FAMILY_OPTIONS, LOGO_URL, PRODUCTS as STATIC_PRODUCTS, type FamilyId, type Product } from "../data/catalog";
 import {
   buildQuestions,
   calcResult,
@@ -21,13 +21,33 @@ export default function Home() {
   const [answers, setAnswers] = useState<Answers>({});
   const [questionIndex, setQuestionIndex] = useState(0);
   const [showError, setShowError] = useState(false);
+  // Arranca con el catálogo estático (curado) para que la app funcione al
+  // instante, y lo reemplaza por datos en vivo (precio/imagen/publicado real
+  // de Tienda Nube) apenas responde /api/catalog. Si la API falla, se queda
+  // con el estático — nunca rompe la experiencia.
+  const [products, setProducts] = useState<Product[]>(STATIC_PRODUCTS);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/catalog")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("catalog fetch failed"))))
+      .then((data: { products: Product[] }) => {
+        if (!cancelled && Array.isArray(data.products) && data.products.length) {
+          setProducts(data.products);
+        }
+      })
+      .catch((err) => console.warn("No se pudo cargar el catálogo en vivo, uso el estático:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const questions = useMemo(() => (family ? buildQuestions(family, answers) : []), [family, answers]);
   const currentQuestion = questions[questionIndex];
 
   const result = useMemo(() => (screen === "result" && family ? calcResult(family, answers) : null), [screen, family, answers]);
-  const items = useMemo(() => (result && family ? recommendations(family, result) : []), [result, family]);
-  const primaryProduct = result && family ? primaryResultProduct(family, result, items) : null;
+  const items = useMemo(() => (result && family ? recommendations(products, family, result) : []), [result, family, products]);
+  const primaryProduct = result && family ? primaryResultProduct(products, family, result, items) : null;
 
   function chooseFamily(id: FamilyId) {
     setFamily(id);

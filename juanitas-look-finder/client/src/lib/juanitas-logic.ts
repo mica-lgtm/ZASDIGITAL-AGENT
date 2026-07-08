@@ -1,6 +1,5 @@
 import {
   SIZE_GUIDES,
-  PRODUCTS,
   FALLBACK_IMAGES,
   FEATURED_IMAGE_OVERRIDES,
   SUBTYPE_FEATURED_RECOMMENDATIONS,
@@ -251,8 +250,8 @@ function productMatchesResult(p: Product, family: FamilyId, result: ResultData):
   return false;
 }
 
-function familyProducts(family: FamilyId): Product[] {
-  return PRODUCTS.filter((p) => productBelongsToCurrentFamily(p, family));
+function familyProducts(products: Product[], family: FamilyId): Product[] {
+  return products.filter((p) => productBelongsToCurrentFamily(p, family));
 }
 
 export function imageForFamily(family: FamilyId): string {
@@ -269,12 +268,12 @@ export function imageFor(p: Product | null | undefined, family: FamilyId): strin
   return imageForFamily(family);
 }
 
-function featuredFamilyProducts(family: FamilyId, result: ResultData): Product[] {
+function featuredFamilyProducts(products: Product[], family: FamilyId, result: ResultData): Product[] {
   const subtypeKey = family + "|" + (result.subtype || "");
   const handles = SUBTYPE_FEATURED_RECOMMENDATIONS[subtypeKey] || [];
   const picked = handles
     .map((handle) => {
-      const base = PRODUCTS.find((p) => p.handle === handle);
+      const base = products.find((p) => p.handle === handle);
       if (!base) return null;
       const image = FEATURED_IMAGE_OVERRIDES[handle];
       return image ? { ...base, image } : base;
@@ -294,19 +293,19 @@ function isTiroBajoProduct(p: Product): boolean {
   const h = normalize((p.handle || "") + " " + (p.name || "") + " " + (p.sourceCategory || ""));
   return !isTiroAltoProduct(p) && /(COLALESS|VEDETINA|CULOTTELESS|CULOTTE|TIRO BAJO)/.test(h) && !/(UNIVERSAL|ESPECIAL|TIRITA|REGULABLE|CORREDERA|PACK X12|PACK X6)/.test(h);
 }
-function orderedProductsByHandle(handles: string[]): Product[] {
-  return handles.map((h) => PRODUCTS.find((p) => p.handle === h)).filter((p): p is Product => !!p);
+function orderedProductsByHandle(products: Product[], handles: string[]): Product[] {
+  return handles.map((h) => products.find((p) => p.handle === h)).filter((p): p is Product => !!p);
 }
 
-export function recommendations(family: FamilyId, result: ResultData): Product[] {
+export function recommendations(products: Product[], family: FamilyId, result: ResultData): Product[] {
   if (result.outOfRange) return [];
-  const featured = featuredFamilyProducts(family, result);
-  const exact = familyProducts(family).filter((p) => productMatchesResult(p, family, result));
-  let base = featured.length ? featured : exact.length ? exact : familyProducts(family);
+  const featured = featuredFamilyProducts(products, family, result);
+  const exact = familyProducts(products, family).filter((p) => productMatchesResult(p, family, result));
+  let base = featured.length ? featured : exact.length ? exact : familyProducts(products, family);
   const talleNum = Number(normalizeSize(result.talle || ""));
   if (family === "Bombachas" && result.subtype === "numerico" && Number.isFinite(talleNum)) {
     if (talleNum >= 3) {
-      const priority = orderedProductsByHandle([
+      const priority = orderedProductsByHandle(products, [
         "colaless-tiro-alto-algodon-pack-x3",
         "colaless-tiro-alto-estampada-pack-x3",
         "colaless-tiro-alto-labradas-pack-x3",
@@ -315,12 +314,12 @@ export function recommendations(family: FamilyId, result: ResultData): Product[]
         "colaless-tiro-alto-labradas-con-refuerzo-pack-x3",
       ]);
       const priorityExact = priority.filter((p) => isTiroAltoProduct(p) && isPackX3Product(p) && productMatchesResult(p, family, result));
-      const restExact = familyProducts(family).filter((p) => isTiroAltoProduct(p) && isPackX3Product(p) && productMatchesResult(p, family, result));
+      const restExact = familyProducts(products, family).filter((p) => isTiroAltoProduct(p) && isPackX3Product(p) && productMatchesResult(p, family, result));
       base = [...priorityExact, ...restExact];
     } else {
-      const priority = orderedProductsByHandle(["colaless-algodon-pack-x3", "vedetina-algodon-pack-x3", "colaless-estampada-pack-x3", "vedetina-labradas-pack-x3"]);
+      const priority = orderedProductsByHandle(products, ["colaless-algodon-pack-x3", "vedetina-algodon-pack-x3", "colaless-estampada-pack-x3", "vedetina-labradas-pack-x3"]);
       const priorityExact = priority.filter((p) => isTiroBajoProduct(p) && isPackX3Product(p) && productMatchesResult(p, family, result));
-      const restExact = familyProducts(family).filter((p) => isTiroBajoProduct(p) && isPackX3Product(p) && productMatchesResult(p, family, result));
+      const restExact = familyProducts(products, family).filter((p) => isTiroBajoProduct(p) && isPackX3Product(p) && productMatchesResult(p, family, result));
       base = [...priorityExact, ...restExact];
     }
   }
@@ -335,11 +334,11 @@ export function recommendations(family: FamilyId, result: ResultData): Product[]
     .slice(0, 4);
 }
 
-export function primaryResultProduct(family: FamilyId, result: ResultData, items: Product[]): Product | null {
+export function primaryResultProduct(products: Product[], family: FamilyId, result: ResultData, items: Product[]): Product | null {
   if (family === "Bombachas" && result.subtype === "tirita") {
     return (
-      PRODUCTS.find((p) => p.handle === "colaless-corredera-pack-x3-1iknf") ||
-      PRODUCTS.find((p) => /TIRITA|REGULABLE|CORREDERA/.test(normalize((p.handle || "") + " " + (p.name || "") + " " + (p.sourceCategory || "")))) ||
+      products.find((p) => p.handle === "colaless-corredera-pack-x3-1iknf") ||
+      products.find((p) => /TIRITA|REGULABLE|CORREDERA/.test(normalize((p.handle || "") + " " + (p.name || "") + " " + (p.sourceCategory || "")))) ||
       null
     );
   }
