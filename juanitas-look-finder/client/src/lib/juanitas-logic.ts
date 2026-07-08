@@ -342,7 +342,18 @@ export function primaryResultProduct(products: Product[], family: FamilyId, resu
       null
     );
   }
-  return items.length ? items[0] : null;
+  if (!items.length) return null;
+
+  // Si sabemos qué talle hay que buscar, priorizamos el primer producto que
+  // tenga stock confirmado en ese talle (en cualquier color) y solo caemos al
+  // primero de la lista si ninguno tiene dato de stock o todos están agotados.
+  const sizeValue = sizeValueForCart(family, result);
+  if (sizeValue) {
+    const normSize = normalizeSize(sizeValue);
+    const inStock = items.find((p) => p.stockBySize?.[normSize] !== false);
+    if (inStock) return inStock;
+  }
+  return items[0];
 }
 
 export function resultHref(family: FamilyId, result: ResultData): string {

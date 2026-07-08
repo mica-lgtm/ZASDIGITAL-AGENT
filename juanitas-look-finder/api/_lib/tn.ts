@@ -39,6 +39,26 @@ export function tnStr(v: TNField | undefined): string {
   return typeof v === "string" ? v : v.es || "";
 }
 
+function normalize(s: string): string {
+  return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
+}
+
+// Para cada talle real del producto (curado, no el crudo de TN), ¿hay stock
+// en al menos un color? stock=null/undefined en TN significa "sin control de
+// stock" (se asume disponible); solo se marca sin stock si es explícitamente 0.
+function computeStockBySize(curated: Product, live: TNProductRaw): Record<string, boolean> {
+  const targetTalles = new Set([...(curated.talles || []), ...(curated.corpinioTalles || [])].map(normalize));
+  const stockBySize: Record<string, boolean> = {};
+  for (const v of live.variants || []) {
+    const vals = v.values.map((x) => normalize(tnStr(x)));
+    const talleVal = vals.find((val) => targetTalles.has(val));
+    if (!talleVal) continue;
+    const inStock = v.stock === null || v.stock === undefined || v.stock > 0;
+    stockBySize[talleVal] = stockBySize[talleVal] || inStock;
+  }
+  return stockBySize;
+}
+
 const TN_TIMEOUT_MS = 10000;
 const CACHE_MS = 5 * 60 * 1000;
 
@@ -117,6 +137,7 @@ export async function getLiveCatalog(): Promise<Map<string, LiveProduct>> {
       promoPrice: firstVariant?.promotional_price || "",
       url: live.canonical_url || curated.url,
       published: true,
+      stockBySize: computeStockBySize(curated, live),
     });
   }
 

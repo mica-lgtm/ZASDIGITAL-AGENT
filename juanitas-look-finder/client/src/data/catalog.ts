@@ -1,4 +1,4 @@
-import productsJson from "./products.json";
+import productsJson from "./products.json" with { type: "json" };
 
 export type Product = {
   id: string;
@@ -16,6 +16,10 @@ export type Product = {
   variantKeys: { Color: string; Talle: string }[];
   price: string;
   promoPrice: string;
+  // Stock en vivo por talle (clave = talle normalizado), en cualquier color.
+  // Ausente cuando el dato viene del catálogo estático de fallback — en ese
+  // caso se asume disponible.
+  stockBySize?: Record<string, boolean>;
 };
 
 // Catálogo estático extraído del prototipo — se reemplaza por datos en vivo
