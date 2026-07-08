@@ -1,5 +1,5 @@
 // ─── TIENDA NUBE SHARED LOGIC ───────────────────────────────────────────────
-// Used by /api/catalog (Vercel Function) and server/index.ts (dev local).
+// Used by /api/catalog, /api/cart (Vercel Functions) and server/index.ts (dev local).
 
 import { PRODUCTS as CURATED_PRODUCTS, type Product } from "../../client/src/data/catalog.js";
 
@@ -16,17 +16,25 @@ export type LiveProduct = Product & { published: boolean };
 
 type TNField = { es?: string } | string;
 
-type TNProductRaw = {
+export type TNVariantRaw = {
+  id: number;
+  price: string;
+  promotional_price: string | null;
+  stock: number | null;
+  values: TNField[];
+};
+
+export type TNProductRaw = {
   id: number;
   handle: TNField;
   name: TNField;
   images: { src: string }[];
   canonical_url: string;
   published?: boolean;
-  variants: { price: string; promotional_price: string | null }[];
+  variants: TNVariantRaw[];
 };
 
-function tnStr(v: TNField | undefined): string {
+export function tnStr(v: TNField | undefined): string {
   if (!v) return "";
   return typeof v === "string" ? v : v.es || "";
 }
@@ -34,16 +42,13 @@ function tnStr(v: TNField | undefined): string {
 const TN_TIMEOUT_MS = 10000;
 const CACHE_MS = 5 * 60 * 1000;
 
-let catalogCache: { byHandle: Map<string, LiveProduct>; expires: number } | null = null;
+let rawCache: { byHandle: Map<string, TNProductRaw>; expires: number } | null = null;
 
 async function fetchTNPage(page: number, perPage: number): Promise<TNProductRaw[]> {
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(), TN_TIMEOUT_MS);
   try {
-    const res = await fetch(
-      `${TN_BASE}/products?per_page=${perPage}&page=${page}&fields=id,handle,name,published,images,variants,canonical_url`,
-      { headers: TN_HEADERS, signal: ac.signal }
-    );
+    const res = await fetch(`${TN_BASE}/products?per_page=${perPage}&page=${page}`, { headers: TN_HEADERS, signal: ac.signal });
     if (!res.ok) return [];
     return (await res.json()) as TNProductRaw[];
   } catch {
@@ -64,28 +69,40 @@ async function fetchAllTNProducts(): Promise<TNProductRaw[]> {
   return all;
 }
 
-// Catálogo curado (family/category/talles/corpinioTalles/variantKeys) enriquecido
-// con precio, imagen y estado de publicación en vivo desde Tienda Nube. Cachea
-// 5 minutos para no golpear la API en cada carga de la app.
-export async function getLiveCatalog(): Promise<Map<string, LiveProduct>> {
-  if (catalogCache && Date.now() < catalogCache.expires) {
-    return catalogCache.byHandle;
-  }
+// Cache compartido de los productos crudos de Tienda Nube (con variantes
+// completas: id, values, precio, stock). Usado tanto para armar el catálogo
+// enriquecido (/api/catalog) como para resolver el variant_id exacto al
+// armar el carrito (/api/cart).
+async function getRawCatalog(): Promise<Map<string, TNProductRaw>> {
+  if (rawCache && Date.now() < rawCache.expires) return rawCache.byHandle;
 
+  const byHandle = new Map<string, TNProductRaw>();
+  if (ACCESS_TOKEN) {
+    const tnProducts = await fetchAllTNProducts();
+    for (const p of tnProducts) byHandle.set(tnStr(p.handle), p);
+  }
+  rawCache = { byHandle, expires: Date.now() + CACHE_MS };
+  return byHandle;
+}
+
+export async function getRawProduct(handle: string): Promise<TNProductRaw | undefined> {
+  const raw = await getRawCatalog();
+  return raw.get(handle);
+}
+
+// Catálogo curado (family/category/talles/corpinioTalles/variantKeys) enriquecido
+// con precio, imagen y estado de publicación en vivo desde Tienda Nube.
+export async function getLiveCatalog(): Promise<Map<string, LiveProduct>> {
+  const raw = await getRawCatalog();
   const byHandle = new Map<string, LiveProduct>();
 
   if (!ACCESS_TOKEN) {
     for (const p of CURATED_PRODUCTS) byHandle.set(p.handle, { ...p, published: true });
-    catalogCache = { byHandle, expires: Date.now() + CACHE_MS };
     return byHandle;
   }
 
-  const tnProducts = await fetchAllTNProducts();
-  const tnByHandle = new Map<string, TNProductRaw>();
-  for (const p of tnProducts) tnByHandle.set(tnStr(p.handle), p);
-
   for (const curated of CURATED_PRODUCTS) {
-    const live = tnByHandle.get(curated.handle);
+    const live = raw.get(curated.handle);
     // No encontrado en la tienda (dado de baja) o despublicado: no se muestra,
     // para no recomendar un producto que ya no se puede comprar.
     if (!live || live.published === false) continue;
@@ -103,6 +120,5 @@ export async function getLiveCatalog(): Promise<Map<string, LiveProduct>> {
     });
   }
 
-  catalogCache = { byHandle, expires: Date.now() + CACHE_MS };
   return byHandle;
 }

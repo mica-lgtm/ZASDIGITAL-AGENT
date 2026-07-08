@@ -10,6 +10,7 @@ import {
   primaryResultProduct,
   recommendations,
   resultHref,
+  sizeValueForCart,
   type Answers,
 } from "../lib/juanitas-logic";
 
@@ -48,12 +49,22 @@ export default function Home() {
   const result = useMemo(() => (screen === "result" && family ? calcResult(family, answers) : null), [screen, family, answers]);
   const items = useMemo(() => (result && family ? recommendations(products, family, result) : []), [result, family, products]);
   const primaryProduct = result && family ? primaryResultProduct(products, family, result, items) : null;
+  const cartSizeValue = result && family ? sizeValueForCart(family, result) : null;
+
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [cartLoading, setCartLoading] = useState(false);
+  const [cartError, setCartError] = useState<string | null>(null);
+
+  const needsColorChoice = (primaryProduct?.colors?.length ?? 0) > 1;
+  const canAddToCart = !!primaryProduct && !!cartSizeValue && (!needsColorChoice || !!selectedColor);
 
   function chooseFamily(id: FamilyId) {
     setFamily(id);
     setAnswers({});
     setQuestionIndex(0);
     setShowError(false);
+    setSelectedColor(null);
+    setCartError(null);
     setScreen("question");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -81,6 +92,31 @@ export default function Home() {
     setAnswers({});
     setQuestionIndex(0);
     setScreen("home");
+    setSelectedColor(null);
+    setCartError(null);
+  }
+
+  async function handleAddToCart() {
+    if (!primaryProduct || !cartSizeValue || cartLoading) return;
+    setCartLoading(true);
+    setCartError(null);
+    try {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handle: primaryProduct.handle, size: cartSizeValue, color: selectedColor || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCartError(data.error || "No pudimos armar el carrito. Probá de nuevo.");
+        setCartLoading(false);
+        return;
+      }
+      window.location.href = data.checkout_url;
+    } catch {
+      setCartError("No pudimos conectar con la tienda. Probá de nuevo.");
+      setCartLoading(false);
+    }
   }
 
   const progressTotal = questions.length || 1;
@@ -212,14 +248,6 @@ export default function Home() {
                     ? "Este resultado corresponde al modelo Less tirita regulable. Revisá colores y disponibilidad en la tienda."
                     : "Ahora podés elegir el modelo que más te guste y revisar la disponibilidad del talle en la tienda."}
                 </div>
-                <div className="result-actions">
-                  <a className="buy-btn" href={resultHref(family, result)} target="_blank" rel="noopener noreferrer">
-                    Ver productos en la tienda
-                  </a>
-                  <button className="ghost-btn" type="button" onClick={restart}>
-                    Empezar de nuevo
-                  </button>
-                </div>
                 {items.length > 0 && primaryProduct && (
                   <div className="product-recos">
                     <h3 className="reco-title">Tu producto recomendado</h3>
@@ -233,11 +261,35 @@ export default function Home() {
                         }}
                       />
                       <div className="reco-primary-info">
+                        <span className="reco-primary-price">{money(primaryProduct.promoPrice) || money(primaryProduct.price) || "Ver precio"}</span>
                         <strong>{primaryProduct.name}</strong>
-                        <span>{money(primaryProduct.promoPrice) || money(primaryProduct.price) || "Ver precio"}</span>
-                        <a className="buy-btn" href={primaryProduct.url} target="_blank" rel="noopener noreferrer">
-                          Este talle está disponible →
-                        </a>
+                        {cartSizeValue ? (
+                          <>
+                            {needsColorChoice && (
+                              <div className="color-chips">
+                                {primaryProduct.colors.map((c) => (
+                                  <button
+                                    key={c}
+                                    type="button"
+                                    className={`color-chip ${selectedColor === c ? "selected" : ""}`}
+                                    onClick={() => setSelectedColor(c)}
+                                    title={c}
+                                  >
+                                    {c.length > 22 ? c.slice(0, 22) + "…" : c}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            <button className="buy-btn" type="button" disabled={!canAddToCart || cartLoading} onClick={handleAddToCart}>
+                              {cartLoading ? "Armando carrito…" : needsColorChoice && !selectedColor ? "Elegí un color/tramado" : "¡LO QUIERO AHORA!"}
+                            </button>
+                            {cartError && <p className="cart-error">{cartError}</p>}
+                          </>
+                        ) : (
+                          <a className="buy-btn" href={primaryProduct.url} target="_blank" rel="noopener noreferrer">
+                            Este talle está disponible →
+                          </a>
+                        )}
                       </div>
                     </article>
                     {items.length > 1 && (
@@ -270,6 +322,14 @@ export default function Home() {
                     )}
                   </div>
                 )}
+                <div className="result-actions">
+                  <a className="ghost-btn" href={resultHref(family, result)} target="_blank" rel="noopener noreferrer">
+                    Ver productos en la tienda
+                  </a>
+                  <button className="ghost-btn" type="button" onClick={restart}>
+                    Empezar de nuevo
+                  </button>
+                </div>
               </article>
             </section>
           )}

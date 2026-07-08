@@ -349,3 +349,12 @@ export function resultHref(family: FamilyId, result: ResultData): string {
   const key = family + "|" + (result.subtype || "");
   return SUBTYPE_URLS[key] || CATEGORY_URLS[family] || "https://juanitas.ar/";
 }
+
+// Talle/valor a buscar entre las variantes reales del producto para armar el
+// carrito. Trajes de baño quedan afuera por ahora (combinan corpiño + bombacha
+// en un mismo producto y requieren resolver dos dimensiones de talle a la vez).
+export function sizeValueForCart(family: FamilyId, result: ResultData): string | null {
+  if (family === "Bombachas" || family === "Camisetas") return result.talle;
+  if (family === "Corpiños") return result.corpinio;
+  return null;
+}
