@@ -483,14 +483,15 @@ function CouponBadge({ remainingMs }: { remainingMs: number | null }) {
 
   return (
     <motion.div
-      animate={{ scale: [1, 1.02, 1] }}
-      transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-      style={{ backgroundColor: BORDO, borderColor: BORDO_LIGHT, boxShadow: `0 0 18px ${BORDO}80` }}
-      className="w-full border text-white font-['Inter',sans-serif] text-xs py-3.5 text-center flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5"
+      animate={{ opacity: [0.8, 1, 0.8] }}
+      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      style={{ borderColor: BORDO, backgroundColor: `${BORDO}14` }}
+      className="w-full border-l-2 pl-3 pr-3 py-2 flex items-center justify-between gap-2"
     >
-      <span className="text-base leading-none">✦</span>
-      <span className="tracking-[2px] uppercase font-bold">Cupón {COUPON_CODE} · {DISCOUNT_PERCENT}% off</span>
-      <span className="text-sm font-bold tabular-nums">vence en {formatCountdown(remainingMs)}</span>
+      <span className="text-[10px] font-['Inter',sans-serif] text-white/55 tracking-[0.5px]">
+        <span style={{ color: BORDO_LIGHT }}>✦</span> Tu cupón {COUPON_CODE} ({DISCOUNT_PERCENT}% off) vence en
+      </span>
+      <span className="text-xs font-bold tabular-nums flex-shrink-0" style={{ color: BORDO_LIGHT }}>{formatCountdown(remainingMs)}</span>
     </motion.div>
   );
 }
@@ -910,7 +911,9 @@ export default function Home() {
                           <p className="text-sm font-semibold text-white truncate">{p.name}</p>
                           <p className="text-xs font-['Inter',sans-serif] font-light text-[#C4A882]">{p.price}</p>
                         </div>
-                        <span className="text-white/25 group-hover:text-[#C4A882] transition-colors text-sm flex-shrink-0">→</span>
+                        <span className="flex-shrink-0 whitespace-nowrap text-[9px] font-['Inter',sans-serif] font-semibold tracking-[1.5px] uppercase text-white/50 group-hover:text-[#C4A882] border border-white/15 group-hover:border-[#C4A882]/40 px-2.5 py-1.5 transition-colors">
+                          Ver producto
+                        </span>
                       </motion.a>
                     ))}
                   </div>
@@ -958,7 +961,7 @@ export default function Home() {
                           <span>Redirigiendo…</span>
                         </>
                       ) : couponActive ? (
-                        `Quiero este look · ${DISCOUNT_PERCENT}% off →`
+                        `Quiero el look con ${DISCOUNT_PERCENT}% off →`
                       ) : (
                         "Quiero este look →"
                       )}
