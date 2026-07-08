@@ -483,15 +483,15 @@ function CouponBadge({ remainingMs }: { remainingMs: number | null }) {
 
   return (
     <motion.div
-      animate={{ opacity: [0.8, 1, 0.8] }}
+      animate={{ opacity: [0.85, 1, 0.85] }}
       transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-      style={{ borderColor: BORDO, backgroundColor: `${BORDO}14` }}
-      className="w-full border-l-2 pl-3 pr-3 py-2 flex items-center justify-between gap-2"
+      style={{ backgroundColor: BORDO }}
+      className="w-full pl-3 pr-3 py-2 flex items-center justify-between gap-2"
     >
-      <span className="text-[10px] font-['Inter',sans-serif] text-white/55 tracking-[0.5px]">
-        <span style={{ color: BORDO_LIGHT }}>✦</span> Tu cupón {COUPON_CODE} ({DISCOUNT_PERCENT}% off) vence en
+      <span className="text-[10px] font-['Inter',sans-serif] text-white tracking-[0.5px]">
+        <span>✦</span> Tu cupón vence en
       </span>
-      <span className="text-xs font-bold tabular-nums flex-shrink-0" style={{ color: BORDO_LIGHT }}>{formatCountdown(remainingMs)}</span>
+      <span className="text-xs font-bold tabular-nums text-white flex-shrink-0">{formatCountdown(remainingMs)}</span>
     </motion.div>
   );
 }
