@@ -71,9 +71,15 @@ export default function Home() {
     <div className="juanitas juanitas-body">
       <div className="app">
         <header className="topbar">
-          <div className="logoBox" aria-label="Juanitas">
-            <img src={LOGO_URL} alt="Juanitas" />
-          </div>
+          {screen !== "home" ? (
+            <button className="back-link" type="button" onClick={restart}>
+              ← Inicio
+            </button>
+          ) : (
+            <div className="logoBox" aria-label="Juanitas">
+              <img src={LOGO_URL} alt="Juanitas" />
+            </div>
+          )}
           <div className="top-pill">Mi Talle Juanitas</div>
         </header>
 
@@ -194,44 +200,60 @@ export default function Home() {
                     Empezar de nuevo
                   </button>
                 </div>
-                {items.length > 0 && (
+                {items.length > 0 && primaryProduct && (
                   <div className="product-recos">
-                    <h3 className="reco-title">Productos para mirar con tu talle</h3>
-                    <div className="reco-grid">
-                      {items.map((p) => (
-                        <article className="reco-card" key={p.id}>
-                          <img
-                            src={imageFor(p, family)}
-                            alt={p.name}
-                            loading="lazy"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = imageForFamily(family);
-                            }}
-                          />
-                          <div className="reco-info">
-                            <strong>{p.name}</strong>
-                            <span>{money(p.promoPrice) || money(p.price) || "Ver precio"}</span>
-                            <a href={p.url} target="_blank" rel="noopener noreferrer">
-                              Ver producto
-                            </a>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
+                    <h3 className="reco-title">Tu producto recomendado</h3>
+                    <article className="reco-card-primary">
+                      <img
+                        src={imageFor(primaryProduct, family)}
+                        alt={primaryProduct.name}
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = imageForFamily(family);
+                        }}
+                      />
+                      <div className="reco-primary-info">
+                        <strong>{primaryProduct.name}</strong>
+                        <span>{money(primaryProduct.promoPrice) || money(primaryProduct.price) || "Ver precio"}</span>
+                        <a className="buy-btn" href={primaryProduct.url} target="_blank" rel="noopener noreferrer">
+                          Este talle está disponible →
+                        </a>
+                      </div>
+                    </article>
+                    {items.length > 1 && (
+                      <>
+                        <p className="copy reco-alt-label">¿Preferís otro color o tramado? Mismo talle, distinta tela/estampado.</p>
+                        <div className="reco-alt-row">
+                          {items
+                            .filter((p) => p.id !== primaryProduct.id)
+                            .map((p) => (
+                              <a
+                                className="reco-alt"
+                                href={p.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                key={p.id}
+                                title={p.name}
+                              >
+                                <img
+                                  src={imageFor(p, family)}
+                                  alt={p.name}
+                                  loading="lazy"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = imageForFamily(family);
+                                  }}
+                                />
+                              </a>
+                            ))}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </article>
             </section>
           )}
         </main>
-
-        {screen !== "home" && (
-          <nav className="nav-bottom show">
-            <button className="pink-btn" type="button" onClick={restart}>
-              Volver al inicio
-            </button>
-          </nav>
-        )}
       </div>
     </div>
   );
