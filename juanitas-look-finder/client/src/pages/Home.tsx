@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "../juanitas.css";
+import * as analytics from "../lib/analytics";
 import { FAMILY_OPTIONS, LOGO_URL, PRODUCTS as STATIC_PRODUCTS, type FamilyId, type Product } from "../data/catalog";
 import {
   buildQuestions,
@@ -47,6 +48,13 @@ export default function Home() {
   const currentQuestion = questions[questionIndex];
 
   const result = useMemo(() => (screen === "result" && family ? calcResult(family, answers) : null), [screen, family, answers]);
+  const prevScreen = useRef<Screen>("home");
+  useEffect(() => {
+    if (screen === "result" && prevScreen.current !== "result" && result && family) {
+      analytics.trackResult(family, result.display, primaryResultProduct(products, family, result, recommendations(products, family, result))?.name ?? null);
+    }
+    prevScreen.current = screen;
+  }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
   const items = useMemo(() => (result && family ? recommendations(products, family, result) : []), [result, family, products]);
   const primaryProduct = result && family ? primaryResultProduct(products, family, result, items) : null;
   const cartSizeValue = result && family ? sizeValueForCart(family, result) : null;
@@ -55,10 +63,33 @@ export default function Home() {
   const [cartLoading, setCartLoading] = useState(false);
   const [cartError, setCartError] = useState<string | null>(null);
 
+  // Track open once on mount
+  useEffect(() => { analytics.trackOpen(); }, []);
+
+  // Track abandon on page unload while mid-quiz
+  const screenRef = useRef(screen);
+  const familyRef = useRef(family);
+  const questionIndexRef = useRef(questionIndex);
+  const questionsRef = useRef(questions);
+  useEffect(() => { screenRef.current = screen; }, [screen]);
+  useEffect(() => { familyRef.current = family; }, [family]);
+  useEffect(() => { questionIndexRef.current = questionIndex; }, [questionIndex]);
+  useEffect(() => { questionsRef.current = questions; }, [questions]);
+  useEffect(() => {
+    function onUnload() {
+      if (screenRef.current === "question" && familyRef.current) {
+        analytics.trackAbandon(familyRef.current, questionIndexRef.current + 1, questionsRef.current.length || 1);
+      }
+    }
+    window.addEventListener("pagehide", onUnload);
+    return () => window.removeEventListener("pagehide", onUnload);
+  }, []);
+
   const needsColorChoice = (primaryProduct?.colors?.length ?? 0) > 1;
   const canAddToCart = !!primaryProduct && !!cartSizeValue && (!needsColorChoice || !!selectedColor);
 
   function chooseFamily(id: FamilyId) {
+    analytics.trackFamilySelect(id);
     setFamily(id);
     setAnswers({});
     setQuestionIndex(0);
@@ -74,6 +105,8 @@ export default function Home() {
     setAnswers(nextAnswers);
     setShowError(false);
     if (!family) return;
+
+    analytics.trackAnswer(family, questionId, value, questionIndex);
 
     const nextQuestions = buildQuestions(family, nextAnswers);
     setTimeout(() => {
@@ -112,6 +145,12 @@ export default function Home() {
         setCartLoading(false);
         return;
       }
+      analytics.trackAddToCart(
+        family,
+        primaryProduct.name,
+        cartSizeValue,
+        primaryProduct.promoPrice ?? primaryProduct.price ?? null,
+      );
       window.location.href = data.checkout_url;
     } catch {
       setCartError("No pudimos conectar con la tienda. Probá de nuevo.");
@@ -323,7 +362,8 @@ export default function Home() {
                   </div>
                 )}
                 <div className="result-actions">
-                  <a className="ghost-btn" href={resultHref(family, result)} target="_blank" rel="noopener noreferrer">
+                  <a className="ghost-btn" href={resultHref(family, result)} target="_blank" rel="noopener noreferrer"
+                    onClick={() => analytics.trackStoreExit(family, result.display)}>
                     Ver productos en la tienda
                   </a>
                   <button className="ghost-btn" type="button" onClick={restart}>
