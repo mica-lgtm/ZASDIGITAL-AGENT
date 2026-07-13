@@ -3,6 +3,8 @@ import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
 import { getLiveCatalog, getRawProduct, ACCESS_TOKEN, TN_BASE, TN_HEADERS, tnStr, type TNVariantRaw } from "../api/_lib/tn.js";
+import { recordEvent, getStats } from "../api/_lib/analytics.js";
+import { checkPassword, sessionCookie, clearCookie, isAuthed } from "../api/_lib/admin-auth.js";
 
 function normalize(s: string): string {
   return (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toUpperCase();
@@ -86,6 +88,49 @@ async function startServer() {
     } catch (err) {
       console.error("/api/cart error:", err);
       res.status(500).json({ error: "Error interno al crear el carrito" });
+    }
+  });
+
+  // ── POST /api/track ───────────────────────────────────────────────────────
+  app.post("/api/track", async (req, res) => {
+    try {
+      const { event, family } = req.body as { event?: string; family?: string };
+      if (event) await recordEvent(event, family);
+    } catch (err) {
+      console.error("/api/track error:", err);
+    }
+    res.status(204).end();
+  });
+
+  // ── POST /api/admin/login ─────────────────────────────────────────────────
+  app.post("/api/admin/login", (req, res) => {
+    const { password } = req.body as { password?: string };
+    if (!checkPassword(password || "")) {
+      res.status(401).json({ error: "Contraseña incorrecta" });
+      return;
+    }
+    res.setHeader("Set-Cookie", sessionCookie());
+    res.json({ ok: true });
+  });
+
+  // ── POST /api/admin/logout ────────────────────────────────────────────────
+  app.post("/api/admin/logout", (_req, res) => {
+    res.setHeader("Set-Cookie", clearCookie());
+    res.json({ ok: true });
+  });
+
+  // ── GET /api/admin/stats ──────────────────────────────────────────────────
+  app.get("/api/admin/stats", async (req, res) => {
+    if (!isAuthed(req.headers.cookie)) {
+      res.status(401).json({ error: "No autorizado" });
+      return;
+    }
+    try {
+      const stats = await getStats();
+      res.json(stats);
+    } catch (err) {
+      console.error("/api/admin/stats error:", err);
+      res.status(500).json({ error: "Error al cargar estadísticas" });
     }
   });
 

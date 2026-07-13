@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "../juanitas.css";
 import { FAMILY_OPTIONS, LOGO_URL, PRODUCTS as STATIC_PRODUCTS, type FamilyId, type Product } from "../data/catalog";
 import {
@@ -13,6 +13,7 @@ import {
   sizeValueForCart,
   type Answers,
 } from "../lib/juanitas-logic";
+import { track } from "../lib/track";
 
 type Screen = "home" | "question" | "result";
 
@@ -58,6 +59,27 @@ export default function Home() {
   const needsColorChoice = (primaryProduct?.colors?.length ?? 0) > 1;
   const canAddToCart = !!primaryProduct && !!cartSizeValue && (!needsColorChoice || !!selectedColor);
 
+  // Evita contar el mismo resultado/recomendación dos veces por re-renders
+  // (ej. al elegir color) dentro de la misma sesión de preguntas.
+  const trackedResultKey = useRef<string | null>(null);
+  const trackedProductKey = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (screen !== "result" || !result || !family) return;
+    const key = `${family}|${result.display}|${result.outOfRange}`;
+    if (trackedResultKey.current === key) return;
+    trackedResultKey.current = key;
+    track("size_resolved", family);
+  }, [screen, result, family]);
+
+  useEffect(() => {
+    if (!primaryProduct || !family) return;
+    const key = `${family}|${primaryProduct.handle}`;
+    if (trackedProductKey.current === key) return;
+    trackedProductKey.current = key;
+    track("product_recommended", family);
+  }, [primaryProduct, family]);
+
   function chooseFamily(id: FamilyId) {
     setFamily(id);
     setAnswers({});
@@ -67,6 +89,7 @@ export default function Home() {
     setCartError(null);
     setScreen("question");
     window.scrollTo({ top: 0, behavior: "smooth" });
+    track("family_selected", id);
   }
 
   function chooseAnswer(questionId: string, value: string) {
@@ -94,10 +117,13 @@ export default function Home() {
     setScreen("home");
     setSelectedColor(null);
     setCartError(null);
+    trackedResultKey.current = null;
+    trackedProductKey.current = null;
   }
 
   async function handleAddToCart() {
     if (!primaryProduct || !cartSizeValue || cartLoading) return;
+    track("add_to_cart_click", family || undefined);
     setCartLoading(true);
     setCartError(null);
     try {
@@ -110,12 +136,15 @@ export default function Home() {
       if (!res.ok) {
         setCartError(data.error || "No pudimos armar el carrito. Probá de nuevo.");
         setCartLoading(false);
+        track("cart_error", family || undefined);
         return;
       }
+      track("cart_success", family || undefined);
       window.location.href = data.checkout_url;
     } catch {
       setCartError("No pudimos conectar con la tienda. Probá de nuevo.");
       setCartLoading(false);
+      track("cart_error", family || undefined);
     }
   }
 
